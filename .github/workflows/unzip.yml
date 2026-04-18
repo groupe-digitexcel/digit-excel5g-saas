@@ -1,25 +1,20 @@
-name: Manual Unzip Only
+name: Unzip and Upload
 
 on:
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
-  unzip:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Install unzip
-        run: sudo apt-get update && sudo apt-get install -y unzip
+      - name: Unzip file
+        run: unzip project.zip -d ./project
 
-      - name: Unzip archive into project directory
-        run: |
-          mkdir -p temp
-          unzip upload/*.zip -d temp
-          cp -r temp/* .
-          rm -rf temp
-
-      - name: Show extracted files (debug)
-        run: ls -R
+      - name: Move files
+        run: cp -r ./project/* .
