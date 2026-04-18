@@ -1,13 +1,10 @@
-name: Manual ZIP Extract & Commit
+name: Manual Unzip Only
 
 on:
   workflow_dispatch:
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
-  unzip-and-commit:
+  unzip:
     runs-on: ubuntu-latest
 
     steps:
@@ -17,22 +14,12 @@ jobs:
       - name: Install unzip
         run: sudo apt-get update && sudo apt-get install -y unzip
 
-      - name: Unzip archive
+      - name: Unzip archive into project directory
         run: |
-          unzip upload/*.zip -d extracted
+          mkdir -p temp
+          unzip upload/*.zip -d temp
+          cp -r temp/* .
+          rm -rf temp
 
-      - name: Move files
-        run: |
-          cp -r extracted/* .
-          rm -rf extracted
-
-      - name: Remove zip
-        run: rm -f upload/*.zip
-
-      - name: Commit and push
-        run: |
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
-          git add .
-          git commit -m "Auto extracted ZIP" || echo "No changes"
-          git push
+      - name: Show extracted files (debug)
+        run: ls -R
