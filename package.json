@@ -1,0 +1,45 @@
+{
+  "name": "digit-excel5g-saas",
+  "version": "3.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "supabase gen types typescript --local > types/database.ts",
+    "db:push": "supabase db push",
+    "db:reset": "supabase db reset",
+    "video:preview": "npx hyperframes preview",
+    "video:render": "npx hyperframes render"
+  },
+  "dependencies": {
+    "next": "14.2.5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "@supabase/supabase-js": "^2.44.4",
+    "@supabase/ssr": "^0.4.0",
+    "axios": "^1.7.2",
+    "react-hot-toast": "^2.4.1",
+    "lucide-react": "^0.400.0",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^2.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.11",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.40",
+    "tailwindcss": "^3.4.6",
+    "typescript": "^5.5.3",
+    "supabase": "^1.180.0"
+  },
+  "optionalDependencies": {
+    "hyperframes": "latest",
+    "@hyperframes/core": "latest",
+    "@hyperframes/engine": "latest",
+    "@hyperframes/producer": "latest"
+  }
+}

@@ -1,0 +1,1553 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Digit-Excel5G AI Studio v3 — Deployment Manual</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── RESET & BASE ──────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#080D1A;
+  --ink2:#050810;
+  --surface:#0F1629;
+  --surface2:#111E35;
+  --surface3:#162040;
+  --brand:#0F4CFF;
+  --brand2:#0033CC;
+  --accent:#00D4FF;
+  --gold:#F5B301;
+  --green:#00C48C;
+  --red:#FF4D4F;
+  --white:#FFFFFF;
+  --muted:rgba(255,255,255,0.45);
+  --border:rgba(255,255,255,0.07);
+  --border2:rgba(255,255,255,0.12);
+  --font-display:'Syne',sans-serif;
+  --font-body:'DM Sans',sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+  --radius:14px;
+  --radius-sm:8px;
+  --shadow-brand:0 8px 40px rgba(15,76,255,0.25);
+  --shadow-accent:0 8px 40px rgba(0,212,255,0.25);
+}
+html{scroll-behavior:smooth;font-size:16px}
+body{
+  background:var(--ink);
+  color:#dce8f8;
+  font-family:var(--font-body);
+  line-height:1.6;
+  min-height:100vh;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:rgba(15,76,255,0.35);color:#fff}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:var(--ink)}
+::-webkit-scrollbar-thumb{background:var(--brand);border-radius:3px}
+
+/* ── LAYOUT ─────────────────────────────────────────────── */
+.layout{display:flex;min-height:100vh}
+.sidebar{
+  width:280px;flex-shrink:0;
+  background:var(--surface);
+  border-right:1px solid var(--border);
+  position:sticky;top:0;height:100vh;
+  overflow-y:auto;display:flex;flex-direction:column;
+  transition:width 0.3s ease;
+  z-index:100;
+}
+.sidebar.collapsed{width:64px}
+.main{flex:1;overflow-x:hidden}
+
+/* ── SIDEBAR ─────────────────────────────────────────────── */
+.sidebar-header{
+  padding:20px 16px 16px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.logo-mark{
+  width:34px;height:34px;border-radius:10px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--brand),var(--accent));
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-display);font-weight:800;font-size:11px;color:#fff;
+}
+.logo-text{font-family:var(--font-display);font-weight:700;font-size:13px;color:#fff;white-space:nowrap}
+.logo-text span{color:var(--accent)}
+.toggle-btn{
+  background:none;border:none;color:rgba(255,255,255,0.4);cursor:pointer;
+  font-size:16px;padding:4px;border-radius:6px;transition:all 0.2s;
+  flex-shrink:0;
+}
+.toggle-btn:hover{background:rgba(255,255,255,0.06);color:#fff}
+
+.progress-ring-wrap{padding:12px 16px;border-bottom:1px solid var(--border)}
+.progress-label{font-size:11px;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between}
+.progress-bar{height:4px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden}
+.progress-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--brand),var(--accent));transition:width 0.6s cubic-bezier(.4,0,.2,1)}
+
+.nav-section{padding:10px 8px}
+.nav-section-title{font-size:10px;font-weight:600;color:rgba(255,255,255,0.25);letter-spacing:.08em;text-transform:uppercase;padding:4px 8px 6px;white-space:nowrap;overflow:hidden}
+.nav-link{
+  display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;
+  text-decoration:none;color:rgba(255,255,255,0.5);font-size:13px;font-weight:500;
+  transition:all 0.2s;cursor:pointer;border:none;background:none;width:100%;text-align:left;
+  white-space:nowrap;overflow:hidden;
+}
+.nav-link:hover{background:rgba(255,255,255,0.05);color:#fff}
+.nav-link.active{background:rgba(15,76,255,0.18);color:#fff;border-left:2px solid var(--brand);padding-left:8px}
+.nav-link .icon{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+.nav-link .step-badge{
+  margin-left:auto;min-width:22px;height:18px;border-radius:9px;font-size:10px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;padding:0 5px;flex-shrink:0;
+}
+.nav-link.done .step-badge{background:rgba(0,196,140,0.2);color:var(--green)}
+.nav-link:not(.done) .step-badge{background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.35)}
+.nav-check{width:16px;height:16px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;transition:all 0.3s}
+.nav-link.done .nav-check{background:var(--green);border-color:var(--green);color:#fff}
+.collapsed .logo-text,.collapsed .progress-ring-wrap,.collapsed .nav-section-title,.collapsed .nav-link span:not(.icon),.collapsed .step-badge,.collapsed .nav-check{display:none!important}
+.collapsed .nav-link{justify-content:center;padding:10px}
+.collapsed .sidebar-header{justify-content:center;padding:16px 8px}
+
+/* ── HERO ─────────────────────────────────────────────────── */
+.hero{
+  position:relative;padding:60px 64px 50px;overflow:hidden;
+  border-bottom:1px solid var(--border);
+}
+.hero-bg{position:absolute;inset:0;pointer-events:none;z-index:0}
+.hero-glow1{position:absolute;top:-100px;left:-100px;width:600px;height:600px;background:radial-gradient(circle,rgba(15,76,255,0.15),transparent 60%);animation:pulse-slow 6s ease-in-out infinite}
+.hero-glow2{position:absolute;bottom:-50px;right:-50px;width:500px;height:500px;background:radial-gradient(circle,rgba(0,212,255,0.08),transparent 60%);animation:pulse-slow 8s ease-in-out infinite 2s}
+.hero-grid{position:absolute;inset:0;background-image:radial-gradient(circle,rgba(15,76,255,0.07) 1px,transparent 1px);background-size:28px 28px}
+.hero-content{position:relative;z-index:1}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:5px 14px;border-radius:999px;margin-bottom:20px;
+  background:rgba(15,76,255,0.12);border:1px solid rgba(15,76,255,0.3);
+  font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#60a5fa;
+}
+.hero h1{
+  font-family:var(--font-display);font-size:42px;font-weight:800;
+  color:#fff;line-height:1.1;margin-bottom:8px;
+}
+.hero h1 .accent-text{
+  background:linear-gradient(135deg,var(--accent),var(--brand),var(--gold));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.hero-sub{font-size:16px;color:var(--muted);max-width:600px;margin-bottom:28px;line-height:1.65}
+.hero-tags{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:32px}
+.tag{
+  display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:8px;
+  font-size:12px;font-weight:600;letter-spacing:.03em;
+}
+.tag-brand{background:rgba(15,76,255,0.15);color:#7cabff;border:1px solid rgba(15,76,255,0.25)}
+.tag-green{background:rgba(0,196,140,0.12);color:var(--green);border:1px solid rgba(0,196,140,0.25)}
+.tag-gold{background:rgba(245,179,1,0.12);color:var(--gold);border:1px solid rgba(245,179,1,0.25)}
+.tag-accent{background:rgba(0,212,255,0.1);color:var(--accent);border:1px solid rgba(0,212,255,0.2)}
+.arch-mini{
+  background:rgba(0,0,0,0.4);border:1px solid var(--border2);border-radius:var(--radius);
+  padding:16px 20px;font-family:var(--font-mono);font-size:12px;color:#7dd3fc;line-height:1.7;
+  max-width:700px;
+}
+.arch-mini .cm{color:rgba(255,255,255,0.2)}
+
+/* ── MAIN CONTENT ─────────────────────────────────────────── */
+.content-area{padding:48px 64px;max-width:960px}
+
+/* ── STEP SECTIONS ────────────────────────────────────────── */
+.step-section{margin-bottom:56px;opacity:0;transform:translateY(20px);transition:all 0.5s cubic-bezier(.4,0,.2,1)}
+.step-section.visible{opacity:1;transform:none}
+
+.step-header{
+  display:flex;align-items:flex-start;gap:16px;margin-bottom:28px;
+  padding:20px 24px;border-radius:var(--radius);
+  background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--brand);
+  position:relative;overflow:hidden;
+}
+.step-header::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(15,76,255,0.06),transparent);
+  pointer-events:none;
+}
+.step-letter{
+  min-width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-display);font-weight:800;font-size:16px;color:#fff;flex-shrink:0;
+  background:linear-gradient(135deg,var(--brand),var(--brand2));
+}
+.step-info h2{font-family:var(--font-display);font-size:20px;font-weight:700;color:#fff;margin-bottom:3px}
+.step-info p{font-size:13px;color:var(--muted)}
+.step-done-badge{
+  margin-left:auto;display:flex;align-items:center;gap:6px;padding:5px 12px;
+  border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.05em;
+  opacity:0;transition:all 0.4s;
+}
+.step-done-badge.show{opacity:1}
+
+/* ── SUBSTEP ───────────────────────────────────────────────── */
+.substep{margin-bottom:24px}
+.substep-title{
+  display:flex;align-items:center;gap:10px;margin-bottom:12px;
+  cursor:pointer;
+}
+.substep-num{
+  width:26px;height:26px;border-radius:50%;
+  background:var(--accent);color:var(--ink);
+  font-weight:800;font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.substep-title h3{font-family:var(--font-display);font-size:14px;font-weight:600;color:#fff}
+
+/* ── CODE BLOCKS ───────────────────────────────────────────── */
+.code-wrap{position:relative;margin:12px 0}
+.code-label{
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(0,0,0,0.6);border-top-left-radius:10px;border-top-right-radius:10px;
+  border:1px solid var(--border2);border-bottom:none;padding:8px 14px;
+}
+.code-label-name{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.05em}
+.copy-btn{
+  background:rgba(15,76,255,0.2);border:1px solid rgba(15,76,255,0.4);color:#7cabff;
+  font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;cursor:pointer;
+  transition:all 0.2s;font-family:var(--font-body);
+}
+.copy-btn:hover{background:rgba(15,76,255,0.35);color:#fff}
+.copy-btn.copied{background:rgba(0,196,140,0.2);border-color:rgba(0,196,140,0.4);color:var(--green)}
+pre{
+  background:rgba(0,0,0,0.55);border:1px solid var(--border2);
+  border-bottom-left-radius:10px;border-bottom-right-radius:10px;
+  padding:16px 18px;overflow-x:auto;
+  font-family:var(--font-mono);font-size:12.5px;line-height:1.7;color:#7dd3fc;
+  margin:0;
+}
+pre.no-label{border-radius:10px!important}
+.cm{color:rgba(100,140,180,0.6)!important}
+.kw{color:#c084fc!important}
+.str{color:#86efac!important}
+.num{color:#fb923c!important}
+.key{color:var(--accent)!important}
+
+/* ── NOTICE BOXES ──────────────────────────────────────────── */
+.notice{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:12px 16px;border-radius:10px;margin:12px 0;font-size:13.5px;line-height:1.6;
+}
+.notice-warn{background:rgba(245,179,1,0.08);border:1px solid rgba(245,179,1,0.25);color:#fcd34d}
+.notice-info{background:rgba(0,212,255,0.07);border:1px solid rgba(0,212,255,0.2);color:var(--accent)}
+.notice-ok{background:rgba(0,196,140,0.08);border:1px solid rgba(0,196,140,0.2);color:var(--green)}
+.notice-error{background:rgba(255,77,79,0.08);border:1px solid rgba(255,77,79,0.2);color:#f87171}
+.notice-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+
+/* ── TABLES ────────────────────────────────────────────────── */
+.table-wrap{overflow-x:auto;margin:12px 0;border-radius:var(--radius);border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead tr{background:var(--brand)}
+th{padding:10px 14px;text-align:left;font-weight:700;color:#fff;font-size:12px;letter-spacing:.03em;white-space:nowrap}
+td{padding:9px 14px;color:#b0c8e8;border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+tr:nth-child(even) td{background:rgba(255,255,255,0.018)}
+tr:hover td{background:rgba(255,255,255,0.03);transition:background 0.15s}
+.td-mono{font-family:var(--font-mono);font-size:12px;color:var(--accent)}
+.td-b{font-weight:600;color:#fff}
+.td-green{color:var(--green);font-weight:600}
+.td-gold{color:var(--gold);font-weight:600}
+.td-muted{color:var(--muted)}
+
+/* ── CHECKLIST ─────────────────────────────────────────────── */
+.checklist{list-style:none;display:flex;flex-direction:column;gap:10px;margin:12px 0}
+.checklist li{
+  display:flex;align-items:flex-start;gap:12px;padding:12px 16px;
+  border-radius:10px;background:var(--surface2);border:1px solid var(--border);
+  font-size:13.5px;cursor:pointer;transition:all 0.2s;user-select:none;
+}
+.checklist li:hover{border-color:var(--border2);background:var(--surface3)}
+.checklist li.checked{border-color:rgba(0,196,140,0.3);background:rgba(0,196,140,0.05)}
+.check-box{
+  width:20px;height:20px;border-radius:6px;border:2px solid rgba(255,255,255,0.2);
+  flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  font-size:11px;transition:all 0.3s;margin-top:1px;
+}
+.checklist li.checked .check-box{background:var(--green);border-color:var(--green);color:#fff}
+.checklist li .text{flex:1;color:rgba(255,255,255,0.75)}
+.checklist li.checked .text{color:var(--muted);text-decoration:line-through}
+
+/* ── ARCHITECTURE DIAGRAM ──────────────────────────────────── */
+.arch-diagram{
+  background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);
+  padding:32px;display:flex;flex-direction:column;align-items:center;gap:8px;margin:16px 0;
+  font-family:var(--font-mono);font-size:12px;position:relative;overflow:hidden;
+}
+.arch-diagram::before{
+  content:'';position:absolute;inset:0;
+  background-image:radial-gradient(circle,rgba(15,76,255,0.04) 1px,transparent 1px);
+  background-size:24px 24px;pointer-events:none;
+}
+.arch-row{display:flex;align-items:center;gap:12px;width:100%;justify-content:center;position:relative;z-index:1}
+.arch-node{
+  padding:10px 20px;border-radius:10px;font-weight:600;
+  display:flex;align-items:center;gap:8px;white-space:nowrap;
+}
+.arch-node-user{background:rgba(255,255,255,0.06);border:1px solid var(--border2);color:#fff}
+.arch-node-github{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#fff}
+.arch-node-vercel{background:rgba(15,76,255,0.2);border:1px solid rgba(15,76,255,0.4);color:#7cabff}
+.arch-node-supabase{background:rgba(0,196,140,0.12);border:1px solid rgba(0,196,140,0.3);color:var(--green)}
+.arch-node-ai{background:rgba(245,179,1,0.08);border:1px solid rgba(245,179,1,0.2);color:var(--gold)}
+.arch-arrow{color:var(--muted);font-size:18px}
+.arch-connector{width:2px;height:28px;background:linear-gradient(to bottom,var(--brand),transparent)}
+.arch-label{font-size:10px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.arch-branch{display:flex;gap:20px;align-items:flex-start}
+.arch-branch-col{display:flex;flex-direction:column;align-items:center;gap:6px}
+
+/* ── FLOW STEPS ────────────────────────────────────────────── */
+.flow-steps{display:flex;flex-direction:column;gap:0;margin:12px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border)}
+.flow-step{
+  display:flex;align-items:flex-start;gap:14px;padding:14px 18px;
+  background:var(--surface2);border-bottom:1px solid var(--border);
+  transition:background 0.2s;
+}
+.flow-step:last-child{border-bottom:none}
+.flow-step:hover{background:var(--surface3)}
+.flow-num{
+  min-width:28px;height:28px;border-radius:50%;
+  background:var(--brand);color:#fff;
+  font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.flow-body{flex:1}
+.flow-title{font-weight:600;color:#fff;font-size:13.5px;margin-bottom:2px}
+.flow-desc{font-size:12.5px;color:var(--muted)}
+
+/* ── ENV VAR CARDS ─────────────────────────────────────────── */
+.env-cards{display:grid;gap:8px;margin:12px 0}
+.env-card{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:11px 15px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);
+}
+.env-key{font-family:var(--font-mono);font-size:12px;color:var(--accent);font-weight:500}
+.env-val{font-size:12px;color:var(--muted);text-align:right;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.env-tag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px;flex-shrink:0}
+.env-public{background:rgba(0,212,255,0.12);color:var(--accent)}
+.env-secret{background:rgba(255,77,79,0.12);color:#f87171}
+.env-optional{background:rgba(255,255,255,0.07);color:var(--muted)}
+
+/* ── COST TABLE ────────────────────────────────────────────── */
+.cost-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:16px 0}
+.cost-card{
+  padding:20px;border-radius:var(--radius);text-align:center;
+  background:var(--surface2);border:1px solid var(--border);
+  transition:all 0.3s;
+}
+.cost-card:hover{border-color:rgba(0,196,140,0.3);transform:translateY(-2px)}
+.cost-service{font-family:var(--font-display);font-size:15px;font-weight:700;color:#fff;margin-bottom:4px}
+.cost-price{font-family:var(--font-display);font-size:26px;font-weight:800;color:var(--green);margin-bottom:4px}
+.cost-plan{font-size:12px;color:var(--muted);margin-bottom:8px}
+.cost-limit{font-size:11px;color:rgba(255,255,255,0.3);line-height:1.5}
+
+/* ── TROUBLESHOOT ──────────────────────────────────────────── */
+.trouble-item{margin:8px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border)}
+.trouble-q{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 18px;background:var(--surface2);cursor:pointer;
+  transition:background 0.2s;
+}
+.trouble-q:hover{background:var(--surface3)}
+.trouble-q-text{display:flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600;color:#fff}
+.trouble-icon{font-size:14px;color:var(--red)}
+.trouble-arrow{font-size:12px;color:var(--muted);transition:transform 0.3s}
+.trouble-item.open .trouble-arrow{transform:rotate(90deg)}
+.trouble-a{
+  display:none;padding:14px 18px;background:rgba(0,0,0,0.3);
+  font-size:13px;color:rgba(255,255,255,0.65);line-height:1.65;
+  border-top:1px solid var(--border);
+}
+.trouble-item.open .trouble-a{display:block}
+
+/* ── SECTION DIVIDER ───────────────────────────────────────── */
+.section-divider{height:1px;background:linear-gradient(to right,transparent,var(--border2),transparent);margin:40px 0}
+
+/* ── COMPLETION MODAL ──────────────────────────────────────── */
+.completion-overlay{
+  position:fixed;inset:0;background:rgba(8,13,26,0.92);backdrop-filter:blur(20px);
+  display:flex;align-items:center;justify-content:center;z-index:9999;
+  opacity:0;pointer-events:none;transition:opacity 0.4s;
+}
+.completion-overlay.show{opacity:1;pointer-events:all}
+.completion-card{
+  background:var(--surface);border:1px solid rgba(0,196,140,0.4);border-radius:24px;
+  padding:48px;text-align:center;max-width:480px;
+  box-shadow:0 0 80px rgba(0,196,140,0.15);
+  transform:scale(0.9);transition:transform 0.4s cubic-bezier(.34,1.56,.64,1);
+}
+.completion-overlay.show .completion-card{transform:scale(1)}
+.completion-emoji{font-size:60px;margin-bottom:16px;animation:bounce 1s ease infinite}
+.completion-title{font-family:var(--font-display);font-size:28px;font-weight:800;color:#fff;margin-bottom:8px}
+.completion-sub{color:var(--muted);font-size:15px;line-height:1.6;margin-bottom:24px}
+.completion-close{
+  padding:12px 28px;border-radius:12px;background:var(--green);color:#fff;
+  font-weight:700;font-size:15px;border:none;cursor:pointer;transition:all 0.2s;
+  font-family:var(--font-body);
+}
+.completion-close:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,196,140,0.35)}
+
+/* ── TOP BAR ────────────────────────────────────────────────── */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 64px;background:rgba(8,13,26,0.85);
+  border-bottom:1px solid var(--border);backdrop-filter:blur(16px);
+  position:sticky;top:0;z-index:50;
+}
+.topbar-title{font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--muted)}
+.topbar-actions{display:flex;align-items:center;gap:10px}
+.topbar-btn{
+  padding:7px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;
+  transition:all 0.2s;font-family:var(--font-body);
+}
+.btn-outline{background:transparent;border:1px solid var(--border2);color:rgba(255,255,255,0.6)}
+.btn-outline:hover{border-color:var(--brand);color:#fff}
+.btn-solid{background:var(--brand);border:1px solid transparent;color:#fff}
+.btn-solid:hover{background:var(--brand2);transform:translateY(-1px)}
+
+/* ── ANIMATIONS ─────────────────────────────────────────────── */
+@keyframes pulse-slow{0%,100%{opacity:1}50%{opacity:0.6}}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+
+/* ── RESPONSIVE ─────────────────────────────────────────────── */
+@media(max-width:900px){
+  .sidebar{display:none}
+  .hero,.content-area{padding:32px 24px}
+  .topbar{padding:12px 24px}
+  .hero h1{font-size:28px}
+}
+</style>
+</head>
+<body>
+
+<!-- COMPLETION MODAL -->
+<div class="completion-overlay" id="completionOverlay">
+  <div class="completion-card">
+    <div class="completion-emoji">🚀</div>
+    <div class="completion-title">Félicitations!</div>
+    <div class="completion-sub">Vous avez complété toutes les étapes du déploiement.<br>Votre app <strong style="color:#fff">Digit-Excel5G AI Studio v3</strong> est maintenant en ligne!</div>
+    <button class="completion-close" onclick="document.getElementById('completionOverlay').classList.remove('show')">Voir mon app en ligne →</button>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="#hero" class="logo">
+        <div class="logo-mark">DE</div>
+        <div class="logo-text">DIGIT-EXCEL<span>5G</span></div>
+      </a>
+      <button class="toggle-btn" onclick="toggleSidebar()">◀</button>
+    </div>
+
+    <div class="progress-ring-wrap">
+      <div class="progress-label">
+        <span>Progression</span>
+        <span id="progressText">0 / 9 étapes</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">Introduction</div>
+      <button class="nav-link" onclick="scrollToSection('overview')">
+        <span class="icon">🏗</span>
+        <span>Architecture</span>
+      </button>
+      <button class="nav-link" onclick="scrollToSection('accounts')">
+        <span class="icon">👤</span>
+        <span>Comptes requis</span>
+      </button>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">Étapes de Déploiement</div>
+      <button class="nav-link" id="nav-A" onclick="scrollToSection('step-A')">
+        <span class="icon" style="background:rgba(15,76,255,0.2);color:#7cabff">A</span>
+        <span>GitHub — Code</span>
+        <span class="nav-check" id="check-A"></span>
+      </button>
+      <button class="nav-link" id="nav-B" onclick="scrollToSection('step-B')">
+        <span class="icon" style="background:rgba(0,196,140,0.15);color:var(--green)">B</span>
+        <span>Supabase — DB + Auth</span>
+        <span class="nav-check" id="check-B"></span>
+      </button>
+      <button class="nav-link" id="nav-C" onclick="scrollToSection('step-C')">
+        <span class="icon" style="background:rgba(245,179,1,0.15);color:var(--gold)">C</span>
+        <span>Variables d'Env</span>
+        <span class="nav-check" id="check-C"></span>
+      </button>
+      <button class="nav-link" id="nav-D" onclick="scrollToSection('step-D')">
+        <span class="icon" style="background:rgba(15,76,255,0.2);color:#7cabff">D</span>
+        <span>Vercel — Deploy</span>
+        <span class="nav-check" id="check-D"></span>
+      </button>
+      <button class="nav-link" id="nav-E" onclick="scrollToSection('step-E')">
+        <span class="icon" style="background:rgba(0,212,255,0.12);color:var(--accent)">E</span>
+        <span>Schéma SQL</span>
+        <span class="nav-check" id="check-E"></span>
+      </button>
+      <button class="nav-link" id="nav-F" onclick="scrollToSection('step-F')">
+        <span class="icon" style="background:rgba(245,179,1,0.15);color:var(--gold)">F</span>
+        <span>Auth Supabase</span>
+        <span class="nav-check" id="check-F"></span>
+      </button>
+      <button class="nav-link" id="nav-G" onclick="scrollToSection('step-G')">
+        <span class="icon" style="background:rgba(255,77,79,0.12);color:#f87171">G</span>
+        <span>Compte Admin</span>
+        <span class="nav-check" id="check-G"></span>
+      </button>
+      <button class="nav-link" id="nav-H" onclick="scrollToSection('step-H')">
+        <span class="icon" style="background:rgba(245,179,1,0.15);color:var(--gold)">H</span>
+        <span>Paiements MoMo</span>
+        <span class="nav-check" id="check-H"></span>
+      </button>
+      <button class="nav-link" id="nav-I" onclick="scrollToSection('step-I')">
+        <span class="icon" style="background:rgba(0,196,140,0.15);color:var(--green)">I</span>
+        <span>Vérification Finale</span>
+        <span class="nav-check" id="check-I"></span>
+      </button>
+      <button class="nav-link" onclick="scrollToSection('hyperframes-video')" style="color:rgba(167,139,250,0.8)">
+        <span class="icon" style="background:rgba(124,58,237,0.2);color:#a78bfa">🎬</span>
+        <span>HyperFrames Vidéos</span>
+        <span style="font-size:9px;font-weight:800;padding:2px 6px;border-radius:5px;background:rgba(124,58,237,0.2);color:#a78bfa;border:1px solid rgba(124,58,237,0.35);flex-shrink:0;">NEW</span>
+      </button>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">Référence</div>
+      <button class="nav-link" onclick="scrollToSection('updates')">
+        <span class="icon">🔄</span>
+        <span>Mises à Jour</span>
+      </button>
+      <button class="nav-link" onclick="scrollToSection('troubleshoot')">
+        <span class="icon">🔧</span>
+        <span>Dépannage</span>
+      </button>
+      <button class="nav-link" onclick="scrollToSection('cost')">
+        <span class="icon">💰</span>
+        <span>Coût $0</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <div class="main">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="topbar-title">Deployment Manual v3 — GitHub · Vercel · Supabase</div>
+      <div class="topbar-actions">
+        <button class="topbar-btn btn-outline" onclick="resetProgress()">↺ Réinitialiser</button>
+        <button class="topbar-btn btn-solid" onclick="markAllDone()">✓ Tout marquer fait</button>
+      </div>
+    </div>
+
+    <!-- HERO -->
+    <section class="hero" id="hero">
+      <div class="hero-bg"><div class="hero-glow1"></div><div class="hero-glow2"></div><div class="hero-grid"></div></div>
+      <div class="hero-content">
+        <div class="hero-badge">🇨🇲 Digit-Excel5G AI Studio v3 — Manuel de Déploiement</div>
+        <h1>Déployer votre SaaS<br><span class="accent-text">en 9 Étapes</span></h1>
+        <p class="hero-sub">Stack moderne: Next.js 14 · TypeScript · Supabase · Vercel · $0/mois.<br>Cochez chaque étape pour suivre votre progression en temps réel.</p>
+        <div class="hero-tags">
+          <span class="tag tag-green">$0 / MOIS</span>
+          <span class="tag tag-brand">NEXT.JS 14</span>
+          <span class="tag tag-green">SUPABASE FREE</span>
+          <span class="tag tag-brand">VERCEL HOBBY</span>
+          <span class="tag tag-accent">AUTO-DEPLOY</span>
+          <span class="tag tag-gold">MTN MoMo</span>
+        </div>
+        <div class="arch-mini">
+          <span class="cm"># Flux de déploiement automatique</span><br>
+          git push origin main<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;├── Vercel rebuilds Next.js + API routes (~2 min)<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;└── Supabase PostgreSQL toujours actif ✅
+        </div>
+      </div>
+    </section>
+
+    <div class="content-area">
+
+      <!-- ── OVERVIEW ── -->
+      <section class="step-section" id="overview">
+        <h2 style="font-family:var(--font-display);font-size:24px;font-weight:700;color:#fff;margin-bottom:20px">🏗 Architecture Overview</h2>
+        <div class="arch-diagram">
+          <div class="arch-row"><div class="arch-node arch-node-user">👤 User Browser</div></div>
+          <div class="arch-connector"></div>
+          <div class="arch-row"><div class="arch-node arch-node-github">🐙 GitHub · Code + CI/CD trigger</div></div>
+          <div class="arch-row" style="gap:40px;margin:4px 0">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+              <span style="font-size:18px;color:var(--brand)">↓</span>
+              <span class="arch-label">auto-deploy</span>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+              <span style="font-size:18px;color:var(--green)">↓</span>
+              <span class="arch-label">always on</span>
+            </div>
+          </div>
+          <div class="arch-branch">
+            <div class="arch-branch-col">
+              <div class="arch-node arch-node-vercel">🔷 Vercel<br><small style="font-weight:400;color:rgba(255,255,255,0.4);font-size:10px">Next.js + API Routes</small></div>
+              <div class="arch-connector"></div>
+              <div class="arch-node arch-node-ai">🤖 Replicate + OpenRouter<br><small style="font-weight:400;color:rgba(255,255,255,0.4);font-size:10px">AI Providers</small></div>
+            </div>
+            <div style="padding-top:20px;color:var(--muted);font-size:12px;display:flex;flex-direction:column;align-items:center;gap:4px">
+              <span style="font-size:18px">↔</span>
+              <span>API calls</span>
+            </div>
+            <div class="arch-branch-col">
+              <div class="arch-node arch-node-supabase">🟢 Supabase<br><small style="font-weight:400;color:rgba(255,255,255,0.4);font-size:10px">PostgreSQL + Auth + Storage</small></div>
+              <div class="arch-connector" style="background:linear-gradient(to bottom,var(--green),transparent)"></div>
+              <div class="arch-node arch-node-ai" style="border-color:rgba(0,196,140,0.2)">🔐 RLS Policies<br><small style="font-weight:400;color:rgba(255,255,255,0.4);font-size:10px">Row Level Security</small></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-wrap" style="margin-top:20px">
+          <table>
+            <thead><tr><th>Couche</th><th>Technologie</th><th>Rôle</th><th>Coût</th></tr></thead>
+            <tbody>
+              <tr><td class="td-b">Frontend</td><td>Next.js 14 App Router + TypeScript</td><td>Pages, UI, Server Components</td><td class="td-green">$0</td></tr>
+              <tr><td class="td-b">Auth</td><td>Supabase Auth</td><td>Email/password + Magic link</td><td class="td-green">$0</td></tr>
+              <tr><td class="td-b">Database</td><td>Supabase PostgreSQL + RLS</td><td>Données + Sécurité row-level</td><td class="td-green">$0</td></tr>
+              <tr><td class="td-b">Storage</td><td>Supabase Storage</td><td>Fichiers IA générés</td><td class="td-green">$0</td></tr>
+              <tr><td class="td-b">API</td><td>Next.js API Routes (Edge)</td><td>Backend serverless intégré</td><td class="td-green">$0</td></tr>
+              <tr><td class="td-b">Deploy</td><td>Vercel Hobby</td><td>CI/CD + CDN mondial</td><td class="td-green">$0</td></tr>
+              <tr><td class="td-b">AI Images</td><td>Replicate</td><td>SDXL, ESRGAN, GFPGAN</td><td class="td-gold">Pay/usage</td></tr>
+              <tr><td class="td-b">AI Text</td><td>OpenRouter → Gemini Flash</td><td>Flyers et chansons</td><td class="td-gold">~$0.001/req</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <div class="section-divider"></div>
+
+      <!-- ── ACCOUNTS ── -->
+      <section class="step-section" id="accounts">
+        <h2 style="font-family:var(--font-display);font-size:22px;font-weight:700;color:#fff;margin-bottom:16px">👤 Comptes à Créer (tous gratuits)</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Service</th><th>URL</th><th>Utilisation</th><th>Carte?</th></tr></thead>
+            <tbody>
+              <tr><td class="td-b">GitHub</td><td class="td-mono">github.com</td><td>Code + auto-deploy trigger</td><td class="td-green">Non</td></tr>
+              <tr><td class="td-b">Supabase</td><td class="td-mono">supabase.com</td><td>Auth + PostgreSQL + Storage</td><td class="td-green">Non</td></tr>
+              <tr><td class="td-b">Vercel</td><td class="td-mono">vercel.com</td><td>Frontend + API hosting</td><td class="td-green">Non</td></tr>
+              <tr><td class="td-b">Replicate</td><td class="td-mono">replicate.com</td><td>Génération images IA</td><td class="td-muted">Oui (crédits)</td></tr>
+              <tr><td class="td-b">OpenRouter</td><td class="td-mono">openrouter.ai</td><td>Texte IA (flyers & chansons)</td><td class="td-muted">$5 min</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="notice notice-info"><span class="notice-icon">ℹ</span>Replicate donne des crédits gratuits à l'inscription. Ajoutez $5 sur OpenRouter — cela couvre des mois d'usage normal pour les flyers et chansons.</div>
+      </section>
+
+      <div class="section-divider"></div>
+
+      <!-- ══════════ STEP A ══════════ -->
+      <section class="step-section" id="step-A">
+        <div class="step-header">
+          <div class="step-letter">A</div>
+          <div class="step-info">
+            <h2>GitHub — Uploader votre Code</h2>
+            <p>Dépôt de code source + déclencheur de déploiement automatique</p>
+          </div>
+          <div class="step-done-badge" id="badge-A" style="background:rgba(0,196,140,0.1);border:1px solid rgba(0,196,140,0.3);color:var(--green)">
+            ✓ Complété
+          </div>
+        </div>
+
+        <div class="substep">
+          <div class="substep-title"><div class="substep-num">1</div><h3>Installer Git sur votre Ordinateur</h3></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>OS</th><th>Commande / Source</th></tr></thead>
+              <tbody>
+                <tr><td class="td-b">Windows</td><td>Télécharger <span class="td-mono">git-scm.com</span> → installer avec options par défaut</td></tr>
+                <tr><td class="td-b">Mac</td><td>Terminal → taper: <span class="td-mono">git --version</span> → installer quand demandé</td></tr>
+                <tr><td class="td-b">Linux</td><td><span class="td-mono">sudo apt install git</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="substep">
+          <div class="substep-title"><div class="substep-num">2</div><h3>Créer le Dépôt GitHub</h3></div>
+          <div class="flow-steps">
+            <div class="flow-step"><div class="flow-num">1</div><div class="flow-body"><div class="flow-title">Aller sur github.com → Se connecter</div></div></div>
+            <div class="flow-step"><div class="flow-num">2</div><div class="flow-body"><div class="flow-title">Cliquer "+" → "New repository"</div></div></div>
+            <div class="flow-step"><div class="flow-num">3</div><div class="flow-body"><div class="flow-title">Repository name: <code style="color:var(--accent)">digit-excel5g-saas</code></div></div></div>
+            <div class="flow-step"><div class="flow-num">4</div><div class="flow-body"><div class="flow-title">Visibility: <strong style="color:var(--green)">Public</strong> ← obligatoire pour Vercel gratuit</div></div></div>
+            <div class="flow-step"><div class="flow-num">5</div><div class="flow-body"><div class="flow-title">Laisser toutes les cases décochées → "Create repository"</div></div></div>
+          </div>
+        </div>
+
+        <div class="substep">
+          <div class="substep-title"><div class="substep-num">3</div><h3>Pousser le Code vers GitHub</h3></div>
+          <div class="code-wrap">
+            <div class="code-label"><span class="code-label-name">Terminal</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+            <pre>cd digit-excel5g-saas
+
+git init
+git add .
+<span class="kw">git commit</span> -m <span class="str">"feat: initial release v3.0 — DE5G AI Studio"</span>
+
+<span class="cm"># Remplacer YOUR_USERNAME par votre nom GitHub</span>
+<span class="kw">git remote add</span> origin https://github.com/<span class="num">YOUR_USERNAME</span>/digit-excel5g-saas.git
+<span class="kw">git branch</span> -M main
+<span class="kw">git push</span> -u origin main</pre>
+          </div>
+          <div class="notice notice-warn"><span class="notice-icon">⚠</span>Si git push demande un mot de passe: utiliser un <strong>Personal Access Token</strong>. GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate → cocher "repo" → copier le token.</div>
+        </div>
+
+        <ul class="checklist" id="checklist-A">
+          <li onclick="toggleCheck(this,'A')"><div class="check-box"></div><div class="text">Git installé et vérifié (<code>git --version</code>)</div></li>
+          <li onclick="toggleCheck(this,'A')"><div class="check-box"></div><div class="text">Dépôt GitHub créé en mode Public</div></li>
+          <li onclick="toggleCheck(this,'A')"><div class="check-box"></div><div class="text">Code poussé — 3 dossiers visibles sur GitHub (app/, components/, supabase/)</div></li>
+        </ul>
+      </section>
+
+      <!-- ══════════ STEP B ══════════ -->
+      <section class="step-section" id="step-B">
+        <div class="step-header" style="border-left-color:var(--green)">
+          <div class="step-letter" style="background:linear-gradient(135deg,var(--green),#00806A)">B</div>
+          <div class="step-info">
+            <h2>Supabase — Créer le Projet</h2>
+            <p>Base de données PostgreSQL + Auth + Storage — tout gratuit</p>
+          </div>
+          <div class="step-done-badge" id="badge-B" style="background:rgba(0,196,140,0.1);border:1px solid rgba(0,196,140,0.3);color:var(--green)">✓ Complété</div>
+        </div>
+
+        <div class="substep">
+          <div class="substep-title"><div class="substep-num">1</div><h3>Créer le Projet Supabase</h3></div>
+          <div class="flow-steps">
+            <div class="flow-step"><div class="flow-num">1</div><div class="flow-body"><div class="flow-title">supabase.com → "Start your project" → connexion avec GitHub</div></div></div>
+            <div class="flow-step"><div class="flow-num">2</div><div class="flow-body"><div class="flow-title">Cliquer "New project"</div></div></div>
+            <div class="flow-step"><div class="flow-num">3</div><div class="flow-body"><div class="flow-title">Name: <code style="color:var(--accent)">digit-excel5g-studio</code> · Password: générer fort · Region: <strong style="color:var(--green)">West EU (Ireland)</strong></div><div class="flow-desc">Ireland = le plus proche de l'Afrique de l'Ouest / Cameroun</div></div></div>
+            <div class="flow-step"><div class="flow-num">4</div><div class="flow-body"><div class="flow-title">Plan: <strong style="color:var(--green)">Free</strong> → "Create new project" → attendre 2 minutes</div></div></div>
+          </div>
+        </div>
+
+        <div class="substep">
+          <div class="substep-title"><div class="substep-num">2</div><h3>Récupérer les Clés API</h3></div>
+          <p style="font-size:13.5px;color:var(--muted);margin-bottom:12px">Supabase → votre projet → <strong style="color:#fff">Project Settings → API</strong></p>
+          <div class="env-cards">
+            <div class="env-card"><span class="env-key">NEXT_PUBLIC_SUPABASE_URL</span><span class="env-val">Section "Project URL"</span><span class="env-tag env-public">PUBLIC</span></div>
+            <div class="env-card"><span class="env-key">NEXT_PUBLIC_SUPABASE_ANON_KEY</span><span class="env-val">Section "Project API keys" → anon public</span><span class="env-tag env-public">PUBLIC</span></div>
+            <div class="env-card"><span class="env-key">SUPABASE_SERVICE_ROLE_KEY</span><span class="env-val">Section "Project API keys" → service_role</span><span class="env-tag env-secret">SECRET</span></div>
+          </div>
+          <div class="notice notice-warn"><span class="notice-icon">⚠</span>La <strong>service_role key</strong> est secrète. Ne jamais la committer sur GitHub. Uniquement dans les variables d'environnement côté serveur.</div>
+        </div>
+
+        <div class="substep">
+          <div class="substep-title"><div class="substep-num">3</div><h3>Créer le Bucket de Stockage</h3></div>
+          <div class="flow-steps">
+            <div class="flow-step"><div class="flow-num">1</div><div class="flow-body"><div class="flow-title">Supabase → Storage → "New bucket"</div></div></div>
+            <div class="flow-step"><div class="flow-num">2</div><div class="flow-body"><div class="flow-title">Name: <code style="color:var(--accent)">ai-outputs</code> · Public bucket: <strong style="color:var(--green)">ON ✅</strong></div></div></div>
+            <div class="flow-step"><div class="flow-num">3</div><div class="flow-body"><div class="flow-title">Cliquer "Save"</div></div></div>
+          </div>
+          <div class="notice notice-info"><span class="notice-icon">ℹ</span>Les policies RLS du bucket seront créées automatiquement par le schéma SQL à l'Étape E.</div>
+        </div>
+
+        <ul class="checklist" id="checklist-B">
+          <li onclick="toggleCheck(this,'B')"><div class="check-box"></div><div class="text">Projet Supabase créé — statut "Active" (vert)</div></li>
+          <li onclick="toggleCheck(this,'B')"><div class="check-box"></div><div class="text">3 clés copiées: URL, anon key, service_role key</div></li>
+          <li onclick="toggleCheck(this,'B')"><div class="check-box"></div><div class="text">Bucket <code>ai-outputs</code> créé en mode Public</div></li>
+        </ul>
+      </section>
+
+      <!-- ══════════ STEP C ══════════ -->
+      <section class="step-section" id="step-C">
+        <div class="step-header" style="border-left-color:var(--gold)">
+          <div class="step-letter" style="background:linear-gradient(135deg,#B37D00,var(--gold))">C</div>
+          <div class="step-info"><h2>Variables d'Environnement</h2><p>Configurer les secrets locaux et production</p></div>
+          <div class="step-done-badge" id="badge-C" style="background:rgba(0,196,140,0.1);border:1px solid rgba(0,196,140,0.3);color:var(--green)">✓ Complété</div>
+        </div>
+
+        <div class="substep">
+          <div class="substep-title"><div class="substep-num">1</div><h3>Créer <code>.env.local</code> (Développement Local)</h3></div>
+          <div class="code-wrap">
+            <div class="code-label"><span class="code-label-name">.env.local</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+            <pre><span class="cm"># Supabase (depuis Étape B)</span>
+<span class="key">NEXT_PUBLIC_SUPABASE_URL</span>=https://xxxxx.supabase.co
+<span class="key">NEXT_PUBLIC_SUPABASE_ANON_KEY</span>=eyJhbGciOiJIUzI1NiIs...
+<span class="key">SUPABASE_SERVICE_ROLE_KEY</span>=eyJhbGciOiJIUzI1NiIs...
+
+<span class="cm"># AI Providers</span>
+<span class="key">REPLICATE_API_KEY</span>=r8_votre_clé_replicate
+<span class="key">OPENROUTER_API_KEY</span>=sk-or-votre_clé_openrouter
+<span class="key">GEMINI_API_KEY</span>=votre_clé_gemini
+
+<span class="cm"># Paiements Cameroun</span>
+<span class="key">MTN_MOMO_NUMBER</span>=+237600000000
+<span class="key">ORANGE_MONEY_NUMBER</span>=+237690000000
+
+<span class="cm"># URL de l'app</span>
+<span class="key">NEXT_PUBLIC_APP_URL</span>=http://localhost:3000</pre>
+          </div>
+          <div class="notice notice-ok"><span class="notice-icon">✓</span><code>.env.local</code> est déjà dans <code>.gitignore</code> — il ne sera jamais commité sur GitHub.</div>
+        </div>
+
+        <div class="substep">
+          <div class="substep-title"><div class="substep-num">2</div><h3>Tester en Local (Optionnel)</h3></div>
+          <div class="code-wrap">
+            <div class="code-label"><span class="code-label-name">Terminal</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+            <pre>npm install
+npm run dev
+<span class="cm"># Ouvrir: http://localhost:3000</span></pre>
+          </div>
+        </div>
+
+        <ul class="checklist" id="checklist-C">
+          <li onclick="toggleCheck(this,'C')"><div class="check-box"></div><div class="text">Fichier <code>.env.local</code> créé avec toutes les clés Supabase</div></li>
+          <li onclick="toggleCheck(this,'C')"><div class="check-box"></div><div class="text">Clés AI renseignées (Replicate + OpenRouter)</div></li>
+          <li onclick="toggleCheck(this,'C')"><div class="check-box"></div><div class="text">Numéros de paiement MTN / Orange configurés</div></li>
+        </ul>
+      </section>
+
+      <!-- ══════════ STEP D ══════════ -->
+      <section class="step-section" id="step-D">
+        <div class="step-header">
+          <div class="step-letter">D</div>
+          <div class="step-info"><h2>Vercel — Déployer l'Application</h2><p>Frontend + API Routes — CDN mondial, SSL auto, $0</p></div>
+          <div class="step-done-badge" id="badge-D" style="background:rgba(0,196,140,0.1);border:1px solid rgba(0,196,140,0.3);color:var(--green)">✓ Complété</div>
+        </div>
+
+        <div class="substep">
+          <div class="substep-title"><div class="substep-num">1</div><h3>Importer le Projet sur Vercel</h3></div>
+          <div class="flow-steps">
+            <div class="flow-step"><div class="flow-num">1</div><div class="flow-body"><div class="flow-title">vercel.com → connexion avec GitHub</div></div></div>
+            <div class="flow-step"><div class="flow-num">2</div><div class="flow-body"><div class="flow-title">Cliquer "Add New..." → "Project"</div></div></div>
+            <div class="flow-step"><div class="flow-num">3</div><div class="flow-body"><div class="flow-title">Sélectionner <code>digit-excel5g-saas</code> → "Import"</div></div></div>
+            <div class="flow-step"><div class="flow-num">4</div><div class="flow-body"><div class="flow-title">Framework Preset: <strong style="color:var(--brand)">Next.js</strong> (détecté automatiquement) · Node.js: <strong>18.x</strong></div></div></div>
+          </div>
+        </div>
+
+        <div class="substep">
+          <div class="substep-title"><div class="substep-num">2</div><h3>Ajouter les Variables d'Environnement sur Vercel</h3></div>
+          <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Cliquer "Environment Variables" et ajouter <strong style="color:#fff">toutes les variables</strong> de votre <code>.env.local</code>:</p>
+          <div class="env-cards">
+            <div class="env-card"><span class="env-key">NEXT_PUBLIC_SUPABASE_URL</span><span class="env-val">Production + Preview + Dev</span><span class="env-tag env-public">PUBLIC</span></div>
+            <div class="env-card"><span class="env-key">NEXT_PUBLIC_SUPABASE_ANON_KEY</span><span class="env-val">Production + Preview + Dev</span><span class="env-tag env-public">PUBLIC</span></div>
+            <div class="env-card"><span class="env-key">SUPABASE_SERVICE_ROLE_KEY</span><span class="env-val">Production + Preview seulement</span><span class="env-tag env-secret">SECRET</span></div>
+            <div class="env-card"><span class="env-key">REPLICATE_API_KEY</span><span class="env-val">Production + Preview</span><span class="env-tag env-secret">SECRET</span></div>
+            <div class="env-card"><span class="env-key">OPENROUTER_API_KEY</span><span class="env-val">Production + Preview</span><span class="env-tag env-secret">SECRET</span></div>
+            <div class="env-card"><span class="env-key">MTN_MOMO_NUMBER</span><span class="env-val">+237XXXXXXXXX (votre vrai numéro)</span><span class="env-tag env-optional">PARAM</span></div>
+            <div class="env-card"><span class="env-key">ORANGE_MONEY_NUMBER</span><span class="env-val">+237XXXXXXXXX (votre vrai numéro)</span><span class="env-tag env-optional">PARAM</span></div>
+            <div class="env-card"><span class="env-key">NEXT_PUBLIC_APP_URL</span><span class="env-val">https://digit-excel5g-saas.vercel.app</span><span class="env-tag env-public">PUBLIC</span></div>
+          </div>
+          <div class="notice notice-warn"><span class="notice-icon">⚠</span>Pour <code>NEXT_PUBLIC_APP_URL</code> en production: utiliser votre vraie URL Vercel (ou domaine personnalisé si vous en avez un).</div>
+        </div>
+
+        <div class="substep">
+          <div class="substep-title"><div class="substep-num">3</div><h3>Déployer et Vérifier</h3></div>
+          <p style="font-size:13.5px;color:var(--muted);margin-bottom:10px">Cliquer <strong style="color:#fff">Deploy</strong>. Premier déploiement: 3–5 minutes.</p>
+          <div class="code-wrap">
+            <div class="code-label"><span class="code-label-name">URL de votre app</span></div>
+            <pre>https://digit-excel5g-saas.vercel.app  <span class="cm">← URL gratuite automatique</span>
+<span class="cm"># ou avec domaine perso (Étape D4 optionnelle)</span></pre>
+          </div>
+          <div class="notice notice-ok"><span class="notice-icon">✓</span>La page d'accueil se charge → Vercel est opérationnel!</div>
+        </div>
+
+        <div class="substep">
+          <div class="substep-title"><div class="substep-num">4</div><h3>Domaine Personnalisé (Optionnel)</h3></div>
+          <div class="flow-steps">
+            <div class="flow-step"><div class="flow-num">1</div><div class="flow-body"><div class="flow-title">Vercel → votre projet → Settings → Domains</div></div></div>
+            <div class="flow-step"><div class="flow-num">2</div><div class="flow-body"><div class="flow-title">Ajouter votre domaine (ex: <code>digit-excel5g.cm</code>)</div></div></div>
+            <div class="flow-step"><div class="flow-num">3</div><div class="flow-body"><div class="flow-title">Vercel affiche les DNS records → les ajouter chez votre registrar</div></div></div>
+            <div class="flow-step"><div class="flow-num">4</div><div class="flow-body"><div class="flow-title">SSL auto activé dès propagation DNS ✅</div></div></div>
+          </div>
+        </div>
+
+        <ul class="checklist" id="checklist-D">
+          <li onclick="toggleCheck(this,'D')"><div class="check-box"></div><div class="text">Projet importé sur Vercel depuis GitHub</div></li>
+          <li onclick="toggleCheck(this,'D')"><div class="check-box"></div><div class="text">Toutes les variables d'environnement ajoutées sur Vercel</div></li>
+          <li onclick="toggleCheck(this,'D')"><div class="check-box"></div><div class="text">Page d'accueil accessible sur <code>*.vercel.app</code></div></li>
+        </ul>
+      </section>
+
+      <!-- ══════════ STEP E ══════════ -->
+      <section class="step-section" id="step-E">
+        <div class="step-header" style="border-left-color:var(--accent)">
+          <div class="step-letter" style="background:linear-gradient(135deg,#007A99,var(--accent))">E</div>
+          <div class="step-info"><h2>Base de Données — Schéma SQL</h2><p>Créer les tables, politiques RLS, triggers et fonctions</p></div>
+          <div class="step-done-badge" id="badge-E" style="background:rgba(0,196,140,0.1);border:1px solid rgba(0,196,140,0.3);color:var(--green)">✓ Complété</div>
+        </div>
+
+        <div class="substep">
+          <div class="substep-title"><div class="substep-num">1</div><h3>Ouvrir l'Éditeur SQL de Supabase</h3></div>
+          <div class="flow-steps">
+            <div class="flow-step"><div class="flow-num">1</div><div class="flow-body"><div class="flow-title">Supabase → votre projet → "SQL Editor" (barre gauche)</div></div></div>
+            <div class="flow-step"><div class="flow-num">2</div><div class="flow-body"><div class="flow-title">Cliquer "New query"</div></div></div>
+          </div>
+        </div>
+
+        <div class="substep">
+          <div class="substep-title"><div class="substep-num">2</div><h3>Exécuter le Schéma de Migration</h3></div>
+          <p style="font-size:13.5px;color:var(--muted);margin-bottom:12px">Ouvrir <code>supabase/migrations/001_initial_schema.sql</code> du ZIP, tout copier et coller dans l'éditeur SQL:</p>
+          <div class="code-wrap">
+            <div class="code-label"><span class="code-label-name">Contenu du schéma (résumé)</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+            <pre><span class="cm">-- Tables créées:</span>
+<span class="kw">CREATE TABLE</span> public.profiles (...)  <span class="cm">-- extension de auth.users</span>
+<span class="kw">CREATE TABLE</span> public.ai_jobs (...)    <span class="cm">-- historique créations IA</span>
+<span class="kw">CREATE TABLE</span> public.payments (...)   <span class="cm">-- paiements MTN / Orange</span>
+
+<span class="cm">-- Trigger auto-création profil:</span>
+<span class="kw">CREATE TRIGGER</span> on_auth_user_created  <span class="cm">-- +100 crédits à l'inscription</span>
+
+<span class="cm">-- Politiques RLS (sécurité):</span>
+<span class="kw">ALTER TABLE</span> profiles <span class="kw">ENABLE ROW LEVEL SECURITY</span>;
+<span class="cm">-- Chaque user voit SEULEMENT ses propres données</span>
+
+<span class="cm">-- Fonction crédits atomique:</span>
+<span class="kw">CREATE FUNCTION</span> deduct_credits(user_id, amount) <span class="kw">RETURNS BOOLEAN</span>
+
+<span class="cm">-- Storage bucket policies:</span>
+<span class="cm">-- Public read + Authenticated write pour ai-outputs</span></pre>
+          </div>
+          <div class="notice notice-ok"><span class="notice-icon">✓</span>Résultat attendu: plusieurs lignes "CREATE TABLE", "CREATE POLICY", "CREATE TRIGGER", "INSERT 0 6". Aucune erreur rouge.</div>
+        </div>
+
+        <div class="substep">
+          <div class="substep-title"><div class="substep-num">3</div><h3>Vérifier les Tables Créées</h3></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Table</th><th>Contenu</th><th>RLS Actif</th></tr></thead>
+              <tbody>
+                <tr><td class="td-mono">profiles</td><td>Utilisateurs — extension auth.users</td><td class="td-green">✓ Oui</td></tr>
+                <tr><td class="td-mono">ai_jobs</td><td>Historique des créations IA</td><td class="td-green">✓ Oui</td></tr>
+                <tr><td class="td-mono">payments</td><td>Paiements MTN MoMo / Orange Money</td><td class="td-green">✓ Oui</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <ul class="checklist" id="checklist-E">
+          <li onclick="toggleCheck(this,'E')"><div class="check-box"></div><div class="text">Schéma SQL exécuté sans erreur rouge</div></li>
+          <li onclick="toggleCheck(this,'E')"><div class="check-box"></div><div class="text">3 tables visibles dans Table Editor de Supabase</div></li>
+          <li onclick="toggleCheck(this,'E')"><div class="check-box"></div><div class="text">Bucket <code>ai-outputs</code> a des policies dans Storage</div></li>
+        </ul>
+      </section>
+
+      <!-- ══════════ STEP F ══════════ -->
+      <section class="step-section" id="step-F">
+        <div class="step-header" style="border-left-color:var(--gold)">
+          <div class="step-letter" style="background:linear-gradient(135deg,#B37D00,var(--gold))">F</div>
+          <div class="step-info"><h2>Activer l'Authentification Supabase</h2><p>Configurer les URLs de redirection et les emails</p></div>
+          <div class="step-done-badge" id="badge-F" style="background:rgba(0,196,140,0.1);border:1px solid rgba(0,196,140,0.3);color:var(--green)">✓ Complété</div>
+        </div>
+
+        <div class="substep">
+          <div class="substep-title"><div class="substep-num">1</div><h3>Configurer les URLs de Redirection</h3></div>
+          <p style="font-size:13.5px;color:var(--muted);margin-bottom:12px">Supabase → Authentication → <strong style="color:#fff">URL Configuration</strong></p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Champ</th><th>Développement</th><th>Production</th></tr></thead>
+              <tbody>
+                <tr><td class="td-b">Site URL</td><td class="td-mono">http://localhost:3000</td><td class="td-mono">https://digit-excel5g-saas.vercel.app</td></tr>
+                <tr><td class="td-b">Redirect URLs</td><td class="td-mono">http://localhost:3000/auth/callback</td><td class="td-mono">https://digit-excel5g-saas.vercel.app/auth/callback</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="notice notice-warn"><span class="notice-icon">⚠</span>Ajouter les <strong>deux URLs</strong> (localhost ET Vercel) dans "Redirect URLs" pour que l'auth fonctionne en dev ET en production.</div>
+        </div>
+
+        <div class="substep">
+          <div class="substep-title"><div class="substep-num">2</div><h3>Email Confirmations</h3></div>
+          <p style="font-size:13.5px;color:var(--muted);margin-bottom:12px">Supabase → Authentication → Providers → Email:</p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Mode</th><th>Email Confirmations</th><th>Usage</th></tr></thead>
+              <tbody>
+                <tr><td class="td-b">Développement</td><td><strong style="color:var(--red)">OFF</strong></td><td>Inscription immédiate, tests rapides</td></tr>
+                <tr><td class="td-b">Production</td><td><strong style="color:var(--green)">ON</strong></td><td>Vérifier l'email avant accès</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <ul class="checklist" id="checklist-F">
+          <li onclick="toggleCheck(this,'F')"><div class="check-box"></div><div class="text">URL localhost et Vercel ajoutées dans Redirect URLs</div></li>
+          <li onclick="toggleCheck(this,'F')"><div class="check-box"></div><div class="text">Email confirmations configuré selon l'environnement</div></li>
+          <li onclick="toggleCheck(this,'F')"><div class="check-box"></div><div class="text">Test inscription → connexion fonctionne sur Vercel</div></li>
+        </ul>
+      </section>
+
+      <!-- ══════════ STEP G ══════════ -->
+      <section class="step-section" id="step-G">
+        <div class="step-header" style="border-left-color:var(--red)">
+          <div class="step-letter" style="background:linear-gradient(135deg,#990000,var(--red))">G</div>
+          <div class="step-info"><h2>Créer votre Compte Administrateur</h2><p>S'inscrire sur le site puis se promouvoir admin via SQL</p></div>
+          <div class="step-done-badge" id="badge-G" style="background:rgba(0,196,140,0.1);border:1px solid rgba(0,196,140,0.3);color:var(--green)">✓ Complété</div>
+        </div>
+
+        <div class="substep">
+          <div class="substep-title"><div class="substep-num">1</div><h3>S'inscrire sur le Site en Production</h3></div>
+          <p style="font-size:13.5px;color:var(--muted)">Aller sur <code>https://digit-excel5g-saas.vercel.app/auth/register</code> → créer un compte avec votre vrai email.</p>
+        </div>
+
+        <div class="substep">
+          <div class="substep-title"><div class="substep-num">2</div><h3>Se Promouvoir Admin via SQL Editor</h3></div>
+          <p style="font-size:13.5px;color:var(--muted);margin-bottom:10px">Supabase → SQL Editor → New query:</p>
+          <div class="code-wrap">
+            <div class="code-label"><span class="code-label-name">Supabase SQL Editor</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+            <pre><span class="cm">-- Remplacer par votre vrai email</span>
+<span class="kw">UPDATE</span> public.profiles
+<span class="kw">SET</span> role = <span class="str">'admin'</span>
+<span class="kw">WHERE</span> email = <span class="str">'votre@email.com'</span>;
+
+<span class="cm">-- Vérifier le résultat:</span>
+<span class="kw">SELECT</span> id, name, email, role
+<span class="kw">FROM</span> public.profiles
+<span class="kw">WHERE</span> role = <span class="str">'admin'</span>;</pre>
+          </div>
+          <div class="notice notice-ok"><span class="notice-icon">✓</span>Résultat attendu: "UPDATE 1" puis votre profil apparaît dans la query de vérification.</div>
+        </div>
+
+        <div class="substep">
+          <div class="substep-title"><div class="substep-num">3</div><h3>Vérifier l'Accès Admin</h3></div>
+          <p style="font-size:13.5px;color:var(--muted)">Se connecter sur le site → naviguer vers <code>/admin</code> → le tableau de bord complet apparaît avec statistiques, paiements et utilisateurs.</p>
+        </div>
+
+        <ul class="checklist" id="checklist-G">
+          <li onclick="toggleCheck(this,'G')"><div class="check-box"></div><div class="text">Compte créé sur le site en production</div></li>
+          <li onclick="toggleCheck(this,'G')"><div class="check-box"></div><div class="text">Role 'admin' assigné via SQL — "UPDATE 1" confirmé</div></li>
+          <li onclick="toggleCheck(this,'G')"><div class="check-box"></div><div class="text">Panel <code>/admin</code> accessible avec tableau de bord complet</div></li>
+        </ul>
+      </section>
+
+      <!-- ══════════ STEP H ══════════ -->
+      <section class="step-section" id="step-H">
+        <div class="step-header" style="border-left-color:var(--gold)">
+          <div class="step-letter" style="background:linear-gradient(135deg,#B37D00,var(--gold))">H</div>
+          <div class="step-info"><h2>Configurer les Paiements MTN / Orange</h2><p>Mettre vos vrais numéros de réception dans les variables d'env</p></div>
+          <div class="step-done-badge" id="badge-H" style="background:rgba(0,196,140,0.1);border:1px solid rgba(0,196,140,0.3);color:var(--green)">✓ Complété</div>
+        </div>
+
+        <div class="substep">
+          <div class="substep-title"><div class="substep-num">1</div><h3>Mettre à Jour les Numéros sur Vercel</h3></div>
+          <p style="font-size:13.5px;color:var(--muted);margin-bottom:12px">Vercel → votre projet → Settings → Environment Variables:</p>
+          <div class="env-cards">
+            <div class="env-card"><span class="env-key">MTN_MOMO_NUMBER</span><span class="env-val">+237 6XX XX XX XX (votre numéro MTN MoMo)</span><span class="env-tag env-optional">PAIEMENT</span></div>
+            <div class="env-card"><span class="env-key">ORANGE_MONEY_NUMBER</span><span class="env-val">+237 6XX XX XX XX (votre numéro Orange Money)</span><span class="env-tag env-optional">PAIEMENT</span></div>
+          </div>
+          <p style="font-size:13px;color:var(--muted);margin-top:10px">Après modification: <strong style="color:#fff">Save</strong> → Vercel redéploie automatiquement (~2 min).</p>
+        </div>
+
+        <div class="substep">
+          <div class="substep-title"><div class="substep-num">2</div><h3>Flux de Paiement Manuel</h3></div>
+          <div class="flow-steps">
+            <div class="flow-step"><div class="flow-num">1</div><div class="flow-body"><div class="flow-title">Client choisit un pack de crédits sur <code>/dashboard/billing</code></div></div></div>
+            <div class="flow-step"><div class="flow-num">2</div><div class="flow-body"><div class="flow-title">Client envoie le montant via MTN MoMo / Orange Money à votre numéro</div></div></div>
+            <div class="flow-step"><div class="flow-num">3</div><div class="flow-body"><div class="flow-title">Client soumet la référence de transaction sur le site</div></div></div>
+            <div class="flow-step"><div class="flow-num">4</div><div class="flow-body"><div class="flow-title">Admin approuve sur <code>/admin</code> → crédits ajoutés instantanément ✅</div></div></div>
+          </div>
+        </div>
+
+        <ul class="checklist" id="checklist-H">
+          <li onclick="toggleCheck(this,'H')"><div class="check-box"></div><div class="text">Numéro MTN MoMo mis à jour sur Vercel</div></li>
+          <li onclick="toggleCheck(this,'H')"><div class="check-box"></div><div class="text">Numéro Orange Money mis à jour sur Vercel</div></li>
+          <li onclick="toggleCheck(this,'H')"><div class="check-box"></div><div class="text">Test paiement soumis → visible dans /admin</div></li>
+        </ul>
+      </section>
+
+      <!-- ══════════ STEP I ══════════ -->
+      <section class="step-section" id="step-I">
+        <div class="step-header" style="border-left-color:var(--green)">
+          <div class="step-letter" style="background:linear-gradient(135deg,var(--green),#00806A)">I</div>
+          <div class="step-info"><h2>Vérification Finale & Tests</h2><p>Confirmer que tout fonctionne de bout en bout</p></div>
+          <div class="step-done-badge" id="badge-I" style="background:rgba(0,196,140,0.1);border:1px solid rgba(0,196,140,0.3);color:var(--green)">✓ Complété</div>
+        </div>
+
+        <p style="font-size:13.5px;color:var(--muted);margin-bottom:16px">Cocher chaque URL et fonctionnalité testée — <strong style="color:#fff">tout doit être ✅ avant de lancer</strong>:</p>
+
+        <ul class="checklist" id="checklist-I">
+          <li onclick="toggleCheck(this,'I')"><div class="check-box"></div><div class="text"><strong>Page d'accueil</strong> — <code>https://votre-app.vercel.app</code> → se charge correctement</div></li>
+          <li onclick="toggleCheck(this,'I')"><div class="check-box"></div><div class="text"><strong>Inscription</strong> — <code>/auth/register</code> → formulaire → redirection vers /dashboard</div></li>
+          <li onclick="toggleCheck(this,'I')"><div class="check-box"></div><div class="text"><strong>Dashboard</strong> — <code>/dashboard</code> → 100 crédits affichés → overview complet</div></li>
+          <li onclick="toggleCheck(this,'I')"><div class="check-box"></div><div class="text"><strong>Image Generator</strong> — générer une image → image apparaît → 3 crédits déduits</div></li>
+          <li onclick="toggleCheck(this,'I')"><div class="check-box"></div><div class="text"><strong>Flyer Generator</strong> — générer un flyer → contenu IA affiché</div></li>
+          <li onclick="toggleCheck(this,'I')"><div class="check-box"></div><div class="text"><strong>Song Generator</strong> — générer une chanson → paroles générées</div></li>
+          <li onclick="toggleCheck(this,'I')"><div class="check-box"></div><div class="text"><strong>Billing</strong> — soumettre un paiement test → message "soumis pour vérification"</div></li>
+          <li onclick="toggleCheck(this,'I')"><div class="check-box"></div><div class="text"><strong>Admin Panel</strong> — <code>/admin</code> → stats + table paiements + users visibles</div></li>
+          <li onclick="toggleCheck(this,'I')"><div class="check-box"></div><div class="text"><strong>Admin Approve</strong> — approuver paiement test → crédits ajoutés au user</div></li>
+          <li onclick="toggleCheck(this,'I')"><div class="check-box"></div><div class="text"><strong>Mobile</strong> — tester sur téléphone → responsive correct</div></li>
+        </ul>
+      </section>
+
+      <div class="section-divider"></div>
+
+      <!-- ══════════ HYPERFRAMES VIDEO ══════════ -->
+      <section class="step-section" id="hyperframes-video" style="scroll-margin-top:80px">
+        <div class="step-header" style="border-left-color:#7C3AED">
+          <div class="step-letter" style="background:linear-gradient(135deg,#7C3AED,#5B21B6)">🎬</div>
+          <div class="step-info">
+            <h2>Vidéos IA — Propulsé par HyperFrames</h2>
+            <p>HTML → MP4 rendu côté serveur · 6 modèles · 3 formats · 8 crédits par vidéo</p>
+          </div>
+          <div style="margin-left:auto;display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;background:rgba(124,58,237,0.15);border:1px solid rgba(124,58,237,0.35);font-size:11px;font-weight:700;color:#a78bfa;">
+            ⚡ NOUVEAU
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+          <div class="card" style="padding:20px;background:linear-gradient(145deg,rgba(124,58,237,0.08),rgba(15,76,255,0.04))">
+            <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px">Ce que HyperFrames ajoute</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:rgba(255,255,255,0.75)"><span style="color:#a78bfa">🎬</span>6 modèles vidéo (Intro, Event, TikTok, Business, Anniversaire, Gospel)</div>
+              <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:rgba(255,255,255,0.75)"><span style="color:#a78bfa">📐</span>3 formats (16:9 HD, 9:16 Vertical, 1:1 Carré)</div>
+              <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:rgba(255,255,255,0.75)"><span style="color:#a78bfa">✨</span>Animations GSAP + particules CSS</div>
+              <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:rgba(255,255,255,0.75)"><span style="color:#a78bfa">🎵</span>6 styles musicaux (Afrobeat, Gospel, Makossa...)</div>
+              <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:rgba(255,255,255,0.75)"><span style="color:#a78bfa">⬇️</span>Export MP4 H.264 · Stocké sur Supabase</div>
+            </div>
+          </div>
+          <div class="card" style="padding:20px">
+            <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px">Flux de rendu</div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="display:flex;gap:10px;font-size:12.5px;color:rgba(255,255,255,0.65)"><span style="color:#a78bfa;font-weight:700;min-width:20px">1.</span>Formulaire → composition HTML + GSAP générée</div>
+              <div style="display:flex;gap:10px;font-size:12.5px;color:rgba(255,255,255,0.65)"><span style="color:#a78bfa;font-weight:700;min-width:20px">2.</span>HyperFrames CLI capture les frames (Puppeteer)</div>
+              <div style="display:flex;gap:10px;font-size:12.5px;color:rgba(255,255,255,0.65)"><span style="color:#a78bfa;font-weight:700;min-width:20px">3.</span>FFmpeg encode les frames en MP4 H.264</div>
+              <div style="display:flex;gap:10px;font-size:12.5px;color:rgba(255,255,255,0.65)"><span style="color:#a78bfa;font-weight:700;min-width:20px">4.</span>Fichier MP4 uploadé sur Supabase Storage</div>
+              <div style="display:flex;gap:10px;font-size:12.5px;color:rgba(255,255,255,0.65)"><span style="color:#a78bfa;font-weight:700;min-width:20px">5.</span>URL publique retournée + 8 crédits déduits</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Setup steps -->
+        <div class="substep">
+          <div class="substep-title"><div class="substep-num" style="background:#7C3AED">1</div><h3>Installer HyperFrames et FFmpeg (Local)</h3></div>
+          <div class="code-wrap">
+            <div class="code-label"><span class="code-label-name">Terminal — Prérequis locaux</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+            <pre><span class="cm"># Node.js 22+ requis pour HyperFrames</span>
+node --version  <span class="cm"># doit afficher v22.x.x ou plus</span>
+
+<span class="cm"># Installer FFmpeg</span>
+<span class="cm"># Windows: winget install ffmpeg</span>
+<span class="cm"># Mac: brew install ffmpeg</span>
+<span class="cm"># Linux: sudo apt install ffmpeg</span>
+
+<span class="cm"># Installer HyperFrames globalement</span>
+<span class="kw">npm install</span> -g hyperframes
+
+<span class="cm"># Vérifier tout est OK</span>
+<span class="kw">npx hyperframes</span> doctor
+
+<span class="cm"># Installer les skills IA (optionnel mais recommandé)</span>
+<span class="kw">npx skills add</span> heygen-com/hyperframes</pre>
+          </div>
+        </div>
+
+        <div class="substep">
+          <div class="substep-title"><div class="substep-num" style="background:#7C3AED">2</div><h3>Exécuter la Migration SQL Vidéo</h3></div>
+          <p style="font-size:13.5px;color:var(--muted);margin-bottom:10px">Dans Supabase SQL Editor, exécuter la migration <code>002_add_video_support.sql</code>:</p>
+          <div class="code-wrap">
+            <div class="code-label"><span class="code-label-name">Supabase SQL Editor</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+            <pre><span class="cm">-- Étendre ai_jobs pour supporter 'video'</span>
+<span class="kw">ALTER TABLE</span> public.ai_jobs
+  <span class="kw">DROP CONSTRAINT IF EXISTS</span> ai_jobs_job_type_check;
+<span class="kw">ALTER TABLE</span> public.ai_jobs
+  <span class="kw">ADD CONSTRAINT</span> ai_jobs_job_type_check
+  <span class="kw">CHECK</span> (job_type <span class="kw">IN</span> (<span class="str">'image'</span>, <span class="str">'photo'</span>, <span class="str">'flyer'</span>, <span class="str">'song'</span>, <span class="str">'video'</span>));
+
+<span class="cm">-- Colonnes vidéo dans ai_jobs</span>
+<span class="kw">ALTER TABLE</span> public.ai_jobs
+  <span class="kw">ADD COLUMN IF NOT EXISTS</span> video_template  text,
+  <span class="kw">ADD COLUMN IF NOT EXISTS</span> video_format    text,
+  <span class="kw">ADD COLUMN IF NOT EXISTS</span> video_duration  integer,
+  <span class="kw">ADD COLUMN IF NOT EXISTS</span> thumbnail_url   text;
+
+<span class="cm">-- Copier le contenu complet de 002_add_video_support.sql</span></pre>
+          </div>
+          <div class="notice notice-ok"><span class="notice-icon">✓</span>Résultat attendu: ALTER TABLE, CREATE TABLE (video_jobs), CREATE INDEX. Aucune erreur.</div>
+        </div>
+
+        <div class="substep">
+          <div class="substep-title"><div class="substep-num" style="background:#7C3AED">3</div><h3>Configurer Vercel pour HyperFrames + FFmpeg</h3></div>
+          <p style="font-size:13.5px;color:var(--muted);margin-bottom:10px">Sur Vercel, les fonctions serverless ont des limites de durée. La génération vidéo nécessite une configuration spéciale:</p>
+          <div class="code-wrap">
+            <div class="code-label"><span class="code-label-name">vercel.json — déjà inclus dans le projet</span></div>
+            <pre><span class="cm">// vercel.json — configuration des fonctions vidéo</span>
+{
+  <span class="key">"functions"</span>: {
+    <span class="str">"app/api/ai/video/route.ts"</span>: {
+      <span class="key">"maxDuration"</span>: <span class="num">300</span>,  <span class="cm">// 5 min max (Vercel Pro requis pour >60s)</span>
+      <span class="key">"memory"</span>: <span class="num">3009</span>       <span class="cm">// 3 GB RAM pour le rendu</span>
+    }
+  }
+}</pre>
+          </div>
+          <div class="notice notice-warn"><span class="notice-icon">⚠</span>Les fonctions >60 secondes nécessitent Vercel <strong>Pro ($20/mois)</strong>. En Hobby: la génération vidéo fonctionne avec des compositions courtes (&lt;15s). Pour une production complète, upgradez vers Vercel Pro ou utilisez Vercel Edge Functions avec streaming.</div>
+        </div>
+
+        <div class="substep">
+          <div class="substep-title"><div class="substep-num" style="background:#7C3AED">4</div><h3>Ajouter la Variable HyperFrames</h3></div>
+          <div style="display:flex;flex-direction:column;gap:8px;margin:10px 0">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 15px;border-radius:10px;background:var(--surface2);border:1px solid var(--border)">
+              <span style="font-family:var(--font-mono);font-size:12px;color:var(--accent)">HYPERFRAMES_ENABLED</span>
+              <span style="font-size:12px;color:var(--muted)">true</span>
+              <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px;background:rgba(124,58,237,0.12);color:#a78bfa">VIDEO</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Templates showcase -->
+        <div style="margin-top:20px">
+          <div style="font-size:13px;font-weight:600;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">6 Modèles Disponibles</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+            <div style="padding:12px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);text-align:center"><div style="font-size:1.5rem;margin-bottom:4px">📦</div><div style="font-size:12px;font-weight:600;color:#fff">Intro Produit</div><div style="font-size:11px;color:var(--muted)">15s · 16:9</div></div>
+            <div style="padding:12px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);text-align:center"><div style="font-size:1.5rem;margin-bottom:4px">🎉</div><div style="font-size:12px;font-weight:600;color:#fff">Promo Événement</div><div style="font-size:11px;color:var(--muted)">10s · tous formats</div></div>
+            <div style="padding:12px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);text-align:center"><div style="font-size:1.5rem;margin-bottom:4px">📱</div><div style="font-size:12px;font-weight:600;color:#fff">TikTok Hook</div><div style="font-size:11px;color:var(--muted)">15s · 9:16</div></div>
+            <div style="padding:12px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);text-align:center"><div style="font-size:1.5rem;margin-bottom:4px">💼</div><div style="font-size:12px;font-weight:600;color:#fff">Pub Business</div><div style="font-size:11px;color:var(--muted)">30s · tous formats</div></div>
+            <div style="padding:12px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);text-align:center"><div style="font-size:1.5rem;margin-bottom:4px">🎂</div><div style="font-size:12px;font-weight:600;color:#fff">Anniversaire</div><div style="font-size:11px;color:var(--muted)">20s · tous formats</div></div>
+            <div style="padding:12px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);text-align:center"><div style="font-size:1.5rem;margin-bottom:4px">🙏</div><div style="font-size:12px;font-weight:600;color:#fff">Louange Gospel</div><div style="font-size:11px;color:var(--muted)">30s · 16:9</div></div>
+          </div>
+        </div>
+
+        <ul class="checklist" id="checklist-VIDEO" style="margin-top:20px">
+          <li onclick="toggleCheckVideo(this)"><div class="check-box"></div><div class="text">Node.js 22+, FFmpeg et HyperFrames installés (<code>npx hyperframes doctor</code>)</div></li>
+          <li onclick="toggleCheckVideo(this)"><div class="check-box"></div><div class="text">Migration SQL <code>002_add_video_support.sql</code> exécutée dans Supabase</div></li>
+          <li onclick="toggleCheckVideo(this)"><div class="check-box"></div><div class="text"><code>HYPERFRAMES_ENABLED=true</code> ajouté dans Vercel env vars</div></li>
+          <li onclick="toggleCheckVideo(this)"><div class="check-box"></div><div class="text">Vidéo test générée sur <code>/dashboard/video-generator</code> → MP4 téléchargeable</div></li>
+        </ul>
+      </section>
+
+      <div class="section-divider"></div>
+
+      <!-- ── UPDATES ── -->
+      <section class="step-section" id="updates">
+        <h2 style="font-family:var(--font-display);font-size:22px;font-weight:700;color:#fff;margin-bottom:16px">🔄 Déployer des Mises à Jour</h2>
+        <p style="font-size:13.5px;color:var(--muted);margin-bottom:14px">Toute modification de code se déploie en <strong style="color:#fff">3 commandes</strong>:</p>
+        <div class="code-wrap">
+          <div class="code-label"><span class="code-label-name">Terminal</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+          <pre><span class="cm"># 1. Stager les changements</span>
+<span class="kw">git add</span> .
+
+<span class="cm"># 2. Committer avec description</span>
+<span class="kw">git commit</span> -m <span class="str">"feat: description de votre changement"</span>
+
+<span class="cm"># 3. Pousser → Vercel redéploie automatiquement</span>
+<span class="kw">git push</span> origin main
+
+<span class="cm"># Vercel reconstruit en ~2 minutes</span>
+<span class="cm"># Supabase: aucune action nécessaire (toujours actif)</span></pre>
+        </div>
+        <div class="table-wrap" style="margin-top:16px">
+          <table>
+            <thead><tr><th>Service</th><th>Où Voir les Logs</th></tr></thead>
+            <tbody>
+              <tr><td class="td-b">Vercel (build)</td><td>Vercel → votre projet → "Deployments" → cliquer le déploiement</td></tr>
+              <tr><td class="td-b">Vercel (API runtime)</td><td>Vercel → "Logs" → filtrer par route ou niveau d'erreur</td></tr>
+              <tr><td class="td-b">Supabase (DB)</td><td>Supabase → "Logs" → "Database", "Auth" ou "Storage"</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="notice notice-info" style="margin-top:12px"><span class="notice-icon">ℹ</span><strong>Rollback:</strong> Vercel → Deployments → trouver un bon déploiement → cliquer "..." → "Redeploy". Restauré en 2 minutes.</div>
+      </section>
+
+      <div class="section-divider"></div>
+
+      <!-- ── TROUBLESHOOT ── -->
+      <section class="step-section" id="troubleshoot">
+        <h2 style="font-family:var(--font-display);font-size:22px;font-weight:700;color:#fff;margin-bottom:16px">🔧 Dépannage</h2>
+
+        <div id="troubleshootList">
+          <div class="trouble-item" onclick="toggleTrouble(this)">
+            <div class="trouble-q"><div class="trouble-q-text"><span class="trouble-icon">❌</span>Page blanche ou erreur 500 au démarrage</div><span class="trouble-arrow">▶</span></div>
+            <div class="trouble-a">Vérifier que <strong>toutes les variables d'environnement</strong> sont dans Vercel Settings → Environment Variables. La cause la plus fréquente: <code>NEXT_PUBLIC_SUPABASE_URL</code> manquante. Ajouter et redéployer.</div>
+          </div>
+          <div class="trouble-item" onclick="toggleTrouble(this)">
+            <div class="trouble-q"><div class="trouble-q-text"><span class="trouble-icon">❌</span>"Missing Supabase environment variables"</div><span class="trouble-arrow">▶</span></div>
+            <div class="trouble-a">Les variables <code>NEXT_PUBLIC_SUPABASE_URL</code> et <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> ne sont pas définies dans Vercel. Aller dans Settings → Environment Variables, les ajouter pour tous les environnements et redéployer.</div>
+          </div>
+          <div class="trouble-item" onclick="toggleTrouble(this)">
+            <div class="trouble-q"><div class="trouble-q-text"><span class="trouble-icon">❌</span>Inscription fonctionne mais redirige en boucle</div><span class="trouble-arrow">▶</span></div>
+            <div class="trouble-a">Vérifier que l'URL Vercel est dans Supabase → Authentication → URL Configuration → Redirect URLs. Souvent oublié. Ajouter <code>https://votre-app.vercel.app/auth/callback</code>.</div>
+          </div>
+          <div class="trouble-item" onclick="toggleTrouble(this)">
+            <div class="trouble-q"><div class="trouble-q-text"><span class="trouble-icon">❌</span>Génération d'images échoue (erreur 500)</div><span class="trouble-arrow">▶</span></div>
+            <div class="trouble-a">Vérifier <code>REPLICATE_API_KEY</code> dans Vercel — elle doit commencer par <code>r8_</code>. Vérifier les logs Vercel → Functions → api/ai/image pour le message d'erreur exact. Vérifier aussi que le compte Replicate a des crédits.</div>
+          </div>
+          <div class="trouble-item" onclick="toggleTrouble(this)">
+            <div class="trouble-q"><div class="trouble-q-text"><span class="trouble-icon">❌</span>Flyers/Chansons retournent seulement le contenu de secours</div><span class="trouble-arrow">▶</span></div>
+            <div class="trouble-a">Vérifier <code>OPENROUTER_API_KEY</code> dans Vercel — elle doit commencer par <code>sk-or-</code>. Ajouter $5 de crédit sur openrouter.ai. Vérifier les logs Vercel pour les erreurs API.</div>
+          </div>
+          <div class="trouble-item" onclick="toggleTrouble(this)">
+            <div class="trouble-q"><div class="trouble-q-text"><span class="trouble-icon">❌</span>"Crédits insuffisants" avec des crédits disponibles</div><span class="trouble-arrow">▶</span></div>
+            <div class="trouble-a">La fonction RPC <code>deduct_credits</code> n'a pas été créée. Ré-exécuter le schéma SQL complet dans Supabase SQL Editor. Vérifier dans Supabase → Database → Functions que <code>deduct_credits</code> existe.</div>
+          </div>
+          <div class="trouble-item" onclick="toggleTrouble(this)">
+            <div class="trouble-q"><div class="trouble-q-text"><span class="trouble-icon">❌</span>Panel Admin non accessible (/admin redirige)</div><span class="trouble-arrow">▶</span></div>
+            <div class="trouble-a">Vérifier que votre rôle est bien 'admin' dans la table profiles. Supabase → SQL Editor: <code>SELECT email, role FROM public.profiles WHERE email = 'votre@email.com';</code></div>
+          </div>
+          <div class="trouble-item" onclick="toggleTrouble(this)">
+            <div class="trouble-q"><div class="trouble-q-text"><span class="trouble-icon">❌</span>git push: "remote: Permission denied"</div><span class="trouble-arrow">▶</span></div>
+            <div class="trouble-a">Utiliser un Personal Access Token au lieu de votre mot de passe. GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token → cocher scope "repo" → utiliser le token comme mot de passe.</div>
+          </div>
+          <div class="trouble-item" onclick="toggleTrouble(this)">
+            <div class="trouble-q"><div class="trouble-q-text"><span class="trouble-icon">❌</span>Images IA générées non affichées après génération</div><span class="trouble-arrow">▶</span></div>
+            <div class="trouble-a">Vérifier que le bucket Supabase <code>ai-outputs</code> existe et est en mode public. Vérifier que les policies ont bien été créées par le schéma SQL. Dans Supabase → Storage, l'URL publique du bucket doit être accessible.</div>
+          </div>
+        </div>
+      </section>
+
+      <div class="section-divider"></div>
+
+      <!-- ── COST ── -->
+      <section class="step-section" id="cost">
+        <h2 style="font-family:var(--font-display);font-size:22px;font-weight:700;color:#fff;margin-bottom:16px">💰 Coût Total: $0 / Mois</h2>
+        <div class="cost-grid">
+          <div class="cost-card"><div class="cost-service">GitHub</div><div class="cost-price">$0</div><div class="cost-plan">Free Forever</div><div class="cost-limit">Dépôts publics illimités · CI/CD illimité</div></div>
+          <div class="cost-card"><div class="cost-service">Supabase</div><div class="cost-price">$0</div><div class="cost-plan">Free Tier</div><div class="cost-limit">500 MB DB · 1 GB storage<br>50K auth users/mois</div></div>
+          <div class="cost-card"><div class="cost-service">Vercel</div><div class="cost-price">$0</div><div class="cost-plan">Hobby Plan</div><div class="cost-limit">100 GB bandwidth<br>100K Edge requests</div></div>
+          <div class="cost-card" style="border-color:rgba(0,196,140,0.3)"><div class="cost-service" style="color:var(--green)">TOTAL</div><div class="cost-price">$0</div><div class="cost-plan">Par mois</div><div class="cost-limit">Jusqu'aux premiers milliers d'utilisateurs</div></div>
+        </div>
+        <div class="notice notice-ok" style="margin-top:16px"><span class="notice-icon">✓</span>Pour les premiers 500 utilisateurs et des milliers de créations, la stack gratuite est largement suffisante pour valider et lancer votre business.</div>
+        <div class="table-wrap" style="margin-top:16px">
+          <table>
+            <thead><tr><th>Quand Upgrader</th><th>Service</th><th>Coût</th></tr></thead>
+            <tbody>
+              <tr><td>DB > 500 MB ou > 50K users</td><td>Supabase Pro</td><td class="td-muted">$25/mois</td></tr>
+              <tr><td>Bandwidth > 100 GB</td><td>Vercel Pro</td><td class="td-muted">$20/mois</td></tr>
+              <tr><td>Besoin backups avancés</td><td>Supabase Pro (inclus)</td><td class="td-muted">$25/mois</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div style="margin-top:32px;padding:24px;border-radius:var(--radius);background:var(--surface2);border:1px solid var(--border)">
+          <h3 style="font-family:var(--font-display);font-size:16px;color:#fff;margin-bottom:12px">📊 URLs Finales en Production</h3>
+          <div class="code-wrap">
+            <pre>Frontend:   https://digit-excel5g-saas.vercel.app
+Dashboard:  https://digit-excel5g-saas.vercel.app/dashboard
+Admin:      https://digit-excel5g-saas.vercel.app/admin
+
+<span class="cm"># Avec domaine personnalisé:</span>
+Site:       https://digit-excel5g.cm
+API:        https://digit-excel5g.cm/api/...</pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- FOOTER -->
+      <div style="text-align:center;padding:40px 0;color:var(--muted);font-size:13px;border-top:1px solid var(--border);margin-top:20px">
+        <div style="font-family:var(--font-display);font-size:16px;font-weight:700;color:#fff;margin-bottom:6px">DIGIT-EXCEL5G AI STUDIO v3</div>
+        <div>© 2026 · Yaoundé, Cameroun 🇨🇲 · Fait avec ❤️ pour l'Afrique</div>
+        <div style="margin-top:6px">GitHub · Vercel · Supabase · $0/mois</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ────────────────────────────────────────────────
+const STEPS = ['A','B','C','D','E','F','G','H','I'];
+const checkState = {};
+STEPS.forEach(s => { checkState[s] = { checks: [], total: 0 }; });
+
+function init() {
+  // Intersection Observer for fade-in
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.06 });
+  document.querySelectorAll('.step-section').forEach(s => observer.observe(s));
+
+  // Count checklists
+  STEPS.forEach(s => {
+    const list = document.getElementById('checklist-' + s);
+    if (list) checkState[s].total = list.querySelectorAll('li').length;
+  });
+
+  // Load saved state
+  const saved = localStorage.getItem('de5g_deploy_state');
+  if (saved) {
+    try {
+      const data = JSON.parse(saved);
+      Object.keys(data).forEach(s => {
+        if (data[s] && data[s].done) {
+          const items = document.querySelectorAll(`#checklist-${s} li`);
+          items.forEach(item => {
+            item.classList.add('checked');
+            item.querySelector('.check-box').textContent = '✓';
+          });
+          checkState[s].checks = Array(checkState[s].total).fill(true);
+          markStepDone(s);
+        }
+      });
+      updateProgress();
+    } catch(e) {}
+  }
+}
+
+// ── CHECKLIST ────────────────────────────────────────────
+function toggleCheck(li, step) {
+  li.classList.toggle('checked');
+  const box = li.querySelector('.check-box');
+  if (li.classList.contains('checked')) {
+    box.textContent = '✓';
+  } else {
+    box.textContent = '';
+  }
+  const list = document.getElementById('checklist-' + step);
+  const total = list.querySelectorAll('li').length;
+  const done = list.querySelectorAll('li.checked').length;
+  checkState[step].checks = done;
+  checkState[step].total = total;
+  if (done === total) {
+    markStepDone(step);
+    celebrate(step);
+  } else {
+    unmarkStepDone(step);
+  }
+  updateProgress();
+  saveState();
+}
+
+function markStepDone(s) {
+  const badge = document.getElementById('badge-' + s);
+  const nav = document.getElementById('nav-' + s);
+  const check = document.getElementById('check-' + s);
+  if (badge) badge.classList.add('show');
+  if (nav) nav.classList.add('done');
+  if (check) { check.textContent = '✓'; check.style.background = 'var(--green)'; check.style.borderColor = 'var(--green)'; check.style.color = '#fff'; }
+}
+
+function unmarkStepDone(s) {
+  const badge = document.getElementById('badge-' + s);
+  const nav = document.getElementById('nav-' + s);
+  const check = document.getElementById('check-' + s);
+  if (badge) badge.classList.remove('show');
+  if (nav) nav.classList.remove('done');
+  if (check) { check.textContent = ''; check.style.background = ''; check.style.borderColor = ''; check.style.color = ''; }
+}
+
+function updateProgress() {
+  let done = 0;
+  STEPS.forEach(s => {
+    const list = document.getElementById('checklist-' + s);
+    if (!list) return;
+    const total = list.querySelectorAll('li').length;
+    const checked = list.querySelectorAll('li.checked').length;
+    if (checked === total && total > 0) done++;
+  });
+  const pct = Math.round((done / STEPS.length) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = done + ' / ' + STEPS.length + ' étapes';
+  if (done === STEPS.length) {
+    setTimeout(() => document.getElementById('completionOverlay').classList.add('show'), 600);
+  }
+}
+
+function celebrate(step) {
+  const header = document.querySelector('#step-' + step + ' .step-header');
+  if (header) {
+    header.style.transition = 'box-shadow 0.4s';
+    header.style.boxShadow = '0 0 30px rgba(0,196,140,0.2)';
+    setTimeout(() => { header.style.boxShadow = ''; }, 1500);
+  }
+}
+
+// ── COPY ─────────────────────────────────────────────────
+function copyCode(btn) {
+  const pre = btn.closest('.code-wrap').querySelector('pre');
+  const text = pre.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓ Copié!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copier'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// ── SIDEBAR ──────────────────────────────────────────────
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  sb.classList.toggle('collapsed');
+  const btn = sb.querySelector('.toggle-btn');
+  btn.textContent = sb.classList.contains('collapsed') ? '▶' : '◀';
+}
+
+// ── SCROLL ───────────────────────────────────────────────
+function scrollToSection(id) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── TROUBLESHOOT ──────────────────────────────────────────
+function toggleTrouble(item) {
+  item.classList.toggle('open');
+}
+
+// ── SAVE/LOAD ─────────────────────────────────────────────
+function saveState() {
+  const state = {};
+  STEPS.forEach(s => {
+    const list = document.getElementById('checklist-' + s);
+    if (!list) return;
+    const total = list.querySelectorAll('li').length;
+    const checked = list.querySelectorAll('li.checked').length;
+    state[s] = { done: checked === total && total > 0, checked };
+  });
+  localStorage.setItem('de5g_deploy_state', JSON.stringify(state));
+}
+
+function resetProgress() {
+  if (!confirm('Réinitialiser toute la progression?')) return;
+  localStorage.removeItem('de5g_deploy_state');
+  STEPS.forEach(s => {
+    document.querySelectorAll(`#checklist-${s} li`).forEach(li => {
+      li.classList.remove('checked');
+      li.querySelector('.check-box').textContent = '';
+    });
+    unmarkStepDone(s);
+  });
+  updateProgress();
+}
+
+function markAllDone() {
+  if (!confirm('Marquer toutes les étapes comme complétées?')) return;
+  STEPS.forEach(s => {
+    document.querySelectorAll(`#checklist-${s} li`).forEach(li => {
+      li.classList.add('checked');
+      li.querySelector('.check-box').textContent = '✓';
+    });
+    markStepDone(s);
+  });
+  updateProgress();
+  saveState();
+}
+
+function toggleCheckVideo(li) {
+  li.classList.toggle('checked')
+  const box = li.querySelector('.check-box')
+  box.textContent = li.classList.contains('checked') ? '✓' : ''
+}
+
+// Active nav highlight on scroll
+const sectionIds = ['overview','accounts','step-A','step-B','step-C','step-D','step-E','step-F','step-G','step-H','step-I','updates','troubleshoot','cost'];
+const navLinks = document.querySelectorAll('.nav-link');
+
+const scrollObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      navLinks.forEach(l => l.classList.remove('active'));
+      const id = e.target.id;
+      const letter = id.replace('step-','');
+      if (['A','B','C','D','E','F','G','H','I'].includes(letter)) {
+        document.getElementById('nav-' + letter)?.classList.add('active');
+      }
+    }
+  });
+}, { threshold: 0.3 });
+
+document.querySelectorAll('.step-section').forEach(s => scrollObserver.observe(s));
+
+// ── INIT ──────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

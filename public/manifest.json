@@ -1,0 +1,16 @@
+{
+  "name": "Digit-Excel5G AI Studio",
+  "short_name": "DE5G Studio",
+  "description": "Africa's Premier AI Creative Studio — Images, Photos, Flyers, Songs",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#080D1A",
+  "theme_color": "#0F4CFF",
+  "lang": "fr-CM",
+  "categories": ["productivity", "graphics", "music"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable any" }
+  ]
+}
