@@ -5,7 +5,6 @@ module.exports = {
     './components/**/*.{js,ts,jsx,tsx,mdx}',
     './lib/**/*.{js,ts,jsx,tsx,mdx}',
   ],
-  module.exports = {
   theme: {
     extend: {
       colors: {
@@ -15,18 +14,14 @@ module.exports = {
           200: '#c7d2fe',
           300: '#a5b4fc',
           400: '#818cf8',
-          500: '#6366f1', // main brand color
+          500: '#6366f1',
           600: '#4f46e5',
           700: '#4338ca',
           800: '#3730a3',
           900: '#312e81',
-        }
-      }
-    }
-  }
-}
+        },
         accent: '#00D4FF',
-        gold:   '#F5B301',
+        gold: '#F5B301',
         surface: {
           DEFAULT: '#0F1629',
           2: '#111E35',
@@ -40,28 +35,47 @@ module.exports = {
         'mtn-yellow': '#FFCC00',
         'orange-money': '#FF6600',
       },
+
       fontFamily: {
         display: ["'Syne'", 'sans-serif'],
-        body:    ["'DM Sans'", 'sans-serif'],
-        mono:    ["'JetBrains Mono'", 'monospace'],
+        body: ["'DM Sans'", 'sans-serif'],
+        mono: ["'JetBrains Mono'", 'monospace'],
       },
+
       backgroundImage: {
-        'grid-dots': 'radial-gradient(circle, rgba(15,76,255,0.07) 1px, transparent 1px)',
-        'hero-glow': 'radial-gradient(ellipse 80% 50% at 50% -10%, rgba(15,76,255,0.3) 0%, transparent 60%)',
-        'card-shine': 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, transparent 60%)',
+        'grid-dots':
+          'radial-gradient(circle, rgba(15,76,255,0.07) 1px, transparent 1px)',
+        'hero-glow':
+          'radial-gradient(ellipse 80% 50% at 50% -10%, rgba(15,76,255,0.3) 0%, transparent 60%)',
+        'card-shine':
+          'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, transparent 60%)',
       },
+
       animation: {
-        'fade-up':     'fadeUp 0.5s ease forwards',
-        'fade-in':     'fadeIn 0.4s ease forwards',
-        'pulse-slow':  'pulse 4s cubic-bezier(0.4,0,0.6,1) infinite',
-        'shimmer':     'shimmer 2s linear infinite',
-        'float':       'float 6s ease-in-out infinite',
+        'fade-up': 'fadeUp 0.5s ease forwards',
+        'fade-in': 'fadeIn 0.4s ease forwards',
+        'pulse-slow': 'pulse 4s cubic-bezier(0.4,0,0.6,1) infinite',
+        shimmer: 'shimmer 2s linear infinite',
+        float: 'float 6s ease-in-out infinite',
       },
+
       keyframes: {
-        fadeUp:  { from: { opacity: 0, transform: 'translateY(16px)' }, to: { opacity: 1, transform: 'translateY(0)' } },
-        fadeIn:  { from: { opacity: 0 }, to: { opacity: 1 } },
-        shimmer: { '0%': { backgroundPosition: '-200% 0' }, '100%': { backgroundPosition: '200% 0' } },
-        float:   { '0%,100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-8px)' } },
+        fadeUp: {
+          from: { opacity: 0, transform: 'translateY(16px)' },
+          to: { opacity: 1, transform: 'translateY(0)' },
+        },
+        fadeIn: {
+          from: { opacity: 0 },
+          to: { opacity: 1 },
+        },
+        shimmer: {
+          '0%': { backgroundPosition: '-200% 0' },
+          '100%': { backgroundPosition: '200% 0' },
+        },
+        float: {
+          '0%,100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-8px)' },
+        },
       },
     },
   },
