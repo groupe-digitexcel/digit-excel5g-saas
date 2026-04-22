@@ -2,6 +2,10 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import AdminPayments from '@/components/dashboard/AdminPayments'
 
+type Profile = {
+  role: 'admin' | 'user'
+}
+
 export default async function AdminPage() {
   const supabase = createClient()
 
@@ -11,13 +15,17 @@ export default async function AdminPage() {
 
   if (!user) redirect('/auth/login')
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('role')
     .eq('id', user.id)
-    .single()
+    .single<Profile>()
 
-  if (!profile || profile.role !== 'admin') {
+  if (profileError || !profile) {
+    redirect('/dashboard')
+  }
+
+  if (profile.role !== 'admin') {
     redirect('/dashboard')
   }
 
@@ -52,11 +60,14 @@ export default async function AdminPage() {
 
   return (
     <div className="space-y-8 animate-fade-up">
+      {/* HEADER */}
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-3 mb-1">
             <span className="text-2xl">🛡️</span>
-            <h1 className="section-title text-2xl text-white">Administration</h1>
+            <h1 className="section-title text-2xl text-white">
+              Administration
+            </h1>
             <span className="badge-gold">ADMIN</span>
           </div>
           <p className="text-white/40 text-sm">
@@ -86,7 +97,7 @@ export default async function AdminPage() {
       {/* PAYMENTS */}
       <AdminPayments payments={allPayments ?? []} />
 
-      {/* USERS */}
+      {/* USERS TABLE */}
       <div>
         <h2 className="section-title text-lg text-white mb-4">
           Utilisateurs ({allUsers?.length ?? 0})
@@ -131,8 +142,12 @@ export default async function AdminPage() {
 
                     <td className="px-5 py-3 text-white/50">{u.email}</td>
                     <td className="px-5 py-3 text-white/40">{u.phone ?? '—'}</td>
-                    <td className="px-5 py-3 text-yellow-400 font-medium">{u.plan ?? '—'}</td>
-                    <td className="px-5 py-3 text-accent font-bold">{u.credits ?? 0}</td>
+                    <td className="px-5 py-3 text-yellow-400 font-medium">
+                      {u.plan ?? '—'}
+                    </td>
+                    <td className="px-5 py-3 text-accent font-bold">
+                      {u.credits ?? 0}
+                    </td>
 
                     <td className="px-5 py-3">
                       <span className={u.role === 'admin' ? 'badge-gold' : 'badge-blue'}>
