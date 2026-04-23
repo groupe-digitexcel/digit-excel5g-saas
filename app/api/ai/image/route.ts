@@ -1,5 +1,3 @@
-// app/api/ai/image/route.ts
-
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import axios from 'axios'
@@ -49,7 +47,7 @@ async function generateImage(prompt: string): Promise<string> {
     )
 
     if (poll.data.status === 'succeeded') {
-      return poll.data.output[0]
+      return poll.data.output?.[0]
     }
 
     if (poll.data.status === 'failed') {
@@ -64,7 +62,7 @@ export async function POST(req: Request) {
   const supabase = createClient()
 
   try {
-    // 1. Auth
+    // 1. Auth user
     const {
       data: { user },
       error: authError,
@@ -77,18 +75,18 @@ export async function POST(req: Request) {
       )
     }
 
-    // 2. Body
+    // 2. Validate input
     const { prompt } = await req.json()
 
-    if (!prompt?.trim()) {
+    if (!prompt || !prompt.trim()) {
       return NextResponse.json(
         { error: 'Prompt requis' },
         { status: 400 }
       )
     }
 
-    // 3. Deduct credits (FIXED TYPE ISSUE)
-    const { data: ok, error: rpcError } = await supabase.rpc<boolean>(
+    // 3. Deduct credits (FIXED: NO GENERIC TYPE)
+    const { data: ok, error: rpcError } = await supabase.rpc(
       'deduct_credits',
       {
         p_user_id: user.id,
@@ -106,8 +104,8 @@ export async function POST(req: Request) {
     // 4. Generate image
     const url = await generateImage(prompt)
 
-    // 5. Save job
-    const { error: insertError } = await supabase.from('ai_jobs').insert({
+    // 5. Save job (non-blocking safety)
+    await supabase.from('ai_jobs').insert({
       user_id: user.id,
       job_type: 'image',
       prompt,
@@ -117,25 +115,10 @@ export async function POST(req: Request) {
       provider: 'replicate',
     })
 
-    if (insertError) {
-      // optional: log but don’t fail request
-      console.error('Insert error:', insertError.message)
-    }
-
-    // 6. Response
+    // 6. Return result
     return NextResponse.json({ url })
   } catch (e: unknown) {
     console.error('AI Image Error:', e)
-
-    // OPTIONAL rollback (safe version)
-    try {
-      await supabase.rpc('deduct_credits', {
-        p_user_id: (await supabase.auth.getUser()).data.user?.id,
-        p_amount: -COST,
-      } as any)
-    } catch (rollbackError) {
-      console.error('Rollback failed:', rollbackError)
-    }
 
     return NextResponse.json(
       {
