@@ -34,8 +34,8 @@ async function generateImage(prompt: string): Promise<string> {
 
   const id = start.data.id
 
-  for (let i = 0; i < 30; i++) {
-    await new Promise((r) => setTimeout(r, 2000))
+  for (let i = 0; i < 40; i++) {
+    await new Promise((r) => setTimeout(r, 1500)) // faster polling
 
     const poll = await axios.get(
       `https://api.replicate.com/v1/predictions/${id}`,
@@ -46,23 +46,27 @@ async function generateImage(prompt: string): Promise<string> {
       }
     )
 
-    if (poll.data.status === 'succeeded') {
+    const status = poll.data.status
+
+    if (status === 'succeeded') {
       return poll.data.output?.[0]
     }
 
-    if (poll.data.status === 'failed') {
+    if (status === 'failed' || status === 'canceled') {
       throw new Error('Génération échouée')
     }
   }
 
-  throw new Error('Timeout')
+  throw new Error('Timeout génération image')
 }
 
 export async function POST(req: Request) {
   const supabase = createClient()
 
+  let userId: string | null = null
+
   try {
-    // 1. Auth user
+    // 1. AUTH
     const {
       data: { user },
       error: authError,
@@ -75,17 +79,19 @@ export async function POST(req: Request) {
       )
     }
 
-    // 2. Validate input
+    userId = user.id
+
+    // 2. INPUT
     const { prompt } = await req.json()
 
-    if (!prompt || !prompt.trim()) {
+    if (!prompt?.trim()) {
       return NextResponse.json(
         { error: 'Prompt requis' },
         { status: 400 }
       )
     }
 
-    // 3. Deduct credits (FIXED: NO GENERIC TYPE)
+    // 3. PRE-DEDUCT (safe approach)
     const { data: ok, error: rpcError } = await supabase.rpc(
       'deduct_credits',
       {
@@ -101,10 +107,25 @@ export async function POST(req: Request) {
       )
     }
 
-    // 4. Generate image
-    const url = await generateImage(prompt)
+    let url: string
 
-    // 5. Save job (non-blocking safety)
+    try {
+      // 4. GENERATE IMAGE
+      url = await generateImage(prompt)
+    } catch (genError) {
+      // 5. ROLLBACK credits ONLY if generation fails
+      await supabase.rpc(
+        'deduct_credits',
+        {
+          p_user_id: user.id,
+          p_amount: -COST,
+        } as any
+      )
+
+      throw genError
+    }
+
+    // 6. SAVE JOB (safe non-blocking)
     await supabase.from('ai_jobs').insert({
       user_id: user.id,
       job_type: 'image',
@@ -113,12 +134,12 @@ export async function POST(req: Request) {
       status: 'completed',
       credits_used: COST,
       provider: 'replicate',
-    })
+    } as any)
 
-    // 6. Return result
+    // 7. RESPONSE
     return NextResponse.json({ url })
   } catch (e: unknown) {
-    console.error('AI Image Error:', e)
+    console.error('AI IMAGE ERROR:', e)
 
     return NextResponse.json(
       {
