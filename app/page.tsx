@@ -1,4 +1,4 @@
-           import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import AdminPayments from '@/components/dashboard/AdminPayments'
 
@@ -25,27 +25,27 @@ type UserProfile = {
 export default async function AdminPage() {
   const supabase = createClient()
 
-  // 🔐 Get user
+  // 🔐 AUTH
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
   if (!user) redirect('/auth/login')
 
-  // 🔐 Check admin role (TYPE SAFE)
-  const { data: profile, error: profileError } = await supabase
+  // 🔐 ADMIN CHECK (FIXED TYPE)
+  const { data: profile, error } = await supabase
     .from('profiles')
     .select('role')
     .eq('id', user.id)
     .single<Profile>()
 
-  if (profileError || !profile || profile.role !== 'admin') {
+  if (error || !profile || profile.role !== 'admin') {
     redirect('/dashboard')
   }
 
   const admin = createAdminClient()
 
-  // 🚀 SAFE FETCH (NO TYPE LOSS)
+  // 🚀 FETCH DATA (SAFE)
   const results = await Promise.all([
     admin.from('profiles').select('*', { count: 'exact', head: true }),
     admin.from('ai_jobs').select('*', { count: 'exact', head: true }),
@@ -66,16 +66,16 @@ export default async function AdminPage() {
       .limit(100),
   ])
 
-  // 📊 Counts
+  // 📊 COUNTS
   const usersCount = results[0].count ?? 0
   const jobsCount = results[1].count ?? 0
   const paymentsCount = results[2].count ?? 0
   const pendingCount = results[3].count ?? 0
 
-  // 💳 Payments
+  // 💳 PAYMENTS
   const allPayments = results[4].data ?? []
 
-  // 👤 Users (CRITICAL FIX)
+  // 👤 USERS (FORCED TYPE FIX)
   const allUsers = (results[5].data ?? []) as UserProfile[]
 
   /* ================= UI ================= */
@@ -108,7 +108,7 @@ export default async function AdminPage() {
       {/* PAYMENTS */}
       <AdminPayments payments={allPayments} />
 
-      {/* USERS */}
+      {/* USERS TABLE */}
       <div>
         <h2 className="text-white mb-4">
           Utilisateurs ({allUsers.length})
@@ -126,9 +126,13 @@ export default async function AdminPage() {
               </tr>
             </thead>
 
-            <tbody>
-              {allUsers.map((u) => (
-                <tr key={u.id} className="border-t border-white/10">
+            <tbody className="divide-y divide-surface">
+              {/* 🔥 FINAL FIX HERE */}
+              {(allUsers as UserProfile[]).map((u) => (
+                <tr
+                  key={u.id}
+                  className="hover:bg-white/2 transition-colors"
+                >
                   <td className="p-2">{u.name ?? '—'}</td>
                   <td className="p-2">{u.email}</td>
                   <td className="p-2">{u.role}</td>
@@ -146,4 +150,4 @@ export default async function AdminPage() {
       </div>
     </div>
   )
-}     
+}
