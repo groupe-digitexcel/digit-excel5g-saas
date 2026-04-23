@@ -1,11 +1,11 @@
-import { createClient } from '@/lib/supabase/server'
+ import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import axios from 'axios'
-import { runAiJob } from '@/lib/ai/ai-pipeline'
 
 const COST = 5
 
 async function callAI(prompt: string): Promise<string | null> {
+  // OpenRouter (primary)
   if (process.env.OPENROUTER_API_KEY) {
     try {
       const res = await axios.post(
@@ -22,10 +22,12 @@ async function callAI(prompt: string): Promise<string | null> {
           },
         }
       )
-      return res.data.choices[0].message.content.trim()
+
+      return res.data.choices?.[0]?.message?.content?.trim() || null
     } catch {}
   }
 
+  // Gemini fallback
   if (process.env.GEMINI_API_KEY) {
     try {
       const res = await axios.post(
@@ -35,7 +37,11 @@ async function callAI(prompt: string): Promise<string | null> {
           generationConfig: { maxOutputTokens: 1200 },
         }
       )
-      return res.data.candidates[0].content.parts[0].text.trim()
+
+      return (
+        res.data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ||
+        null
+      )
     } catch {}
   }
 
@@ -48,10 +54,9 @@ export async function POST(req: Request) {
   // 1. AUTH
   const {
     data: { user },
-    error: authError,
   } = await supabase.auth.getUser()
 
-  if (authError || !user) {
+  if (!user) {
     return NextResponse.json(
       { error: 'Non authentifié' },
       { status: 401 }
@@ -75,6 +80,23 @@ export async function POST(req: Request) {
     )
   }
 
+  // 3. CREDIT DEDUCTION (FIXED — NO TYPES ISSUE)
+  const { data: ok, error: rpcError } = await supabase.rpc(
+    'deduct_credits',
+    {
+      p_user_id: user.id,
+      p_amount: COST,
+    } as any
+  )
+
+  if (rpcError || !ok) {
+    return NextResponse.json(
+      { error: 'Crédits insuffisants' },
+      { status: 402 }
+    )
+  }
+
+  // 4. PROMPT
   const moodGuides: Record<string, string> = {
     gospel: 'gospel africain chrétien uplifting',
     makossa: 'makossa camerounais authentique',
@@ -107,10 +129,11 @@ JSON:
   "lyrics": "paroles complètes avec labels Couplet/Refrain",
   "musicPrompt": "style musical en anglais pour IA audio"
 }
+
 Style guide: ${moodGuides[mood] || mood}
 `
 
-  // 3. AI GENERATION (no credit logic here anymore)
+  // 5. AI CALL
   const aiText = await callAI(prompt)
 
   let result: any
@@ -130,52 +153,30 @@ ${name}, tu brilles guidé(e) par la foi.
 [Refrain]
 ${name}, nous te célébrons,
 Avec amour et joie nous chantons.
-Que Dieu t'accompagne chaque jour,
-Et que ta vie soit pleine d'amour.
 
 [Couplet 2]
-Tes efforts et ton courage, tout le monde les voit,
-Tu avances avec grâce sur le bon chemin.
+Tes efforts et ton courage sont visibles,
+Tu avances avec grâce et dignité.
 
 [Refrain]
 ${name}, nous te célébrons...
 
 [Outro]
-Dieu te bénisse ${name}, à jamais!`,
-      musicPrompt: `${mood} African inspirational song, uplifting choir, piano and percussion`,
+Dieu te bénisse ${name}!`,
+      musicPrompt: `${mood} African inspirational music, choir, percussion, emotional uplifting`,
     }
   }
 
-  try {
-    // 4. CENTRALIZED AI PIPELINE (CREDIT + SAVE)
-    await runAiJob({
-      userId: user.id,
-      cost: COST,
-      prompt: JSON.stringify({ occasion, brand, mood }),
-      type: 'song',
+  // 6. SAVE JOB
+  await supabase.from('ai_jobs').insert({
+    user_id: user.id,
+    job_type: 'song',
+    prompt: JSON.stringify({ occasion, brand, mood }),
+    output_data: result,
+    status: 'completed',
+    credits_used: COST,
+    provider: 'multi-ai',
+  } as any)
 
-      generate: async () => {
-        // song output is already generated above
-        return 'internal://song-generated'
-      },
-    })
-
-    // 5. SAVE FINAL RESULT
-    await supabase.from('ai_jobs').insert({
-      user_id: user.id,
-      job_type: 'song',
-      prompt: JSON.stringify({ occasion, brand, mood }),
-      output_data: result,
-      status: 'completed',
-      credits_used: COST,
-      provider: 'openrouter',
-    } as any)
-
-    return NextResponse.json(result)
-  } catch (e: any) {
-    return NextResponse.json(
-      { error: e.message || 'Erreur serveur' },
-      { status: 500 }
-    )
-  }
-}
+  return NextResponse.json(result)
+}       
