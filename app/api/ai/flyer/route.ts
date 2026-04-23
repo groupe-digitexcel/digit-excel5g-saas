@@ -5,6 +5,17 @@ import axios from 'axios'
 
 const COST = 4
 
+/* ================= TYPES ================= */
+type AIJobInsert = {
+  user_id: string
+  job_type: string
+  prompt: string
+  output_data: Record<string, string>
+  status: string
+  credits_used: number
+  provider: string
+}
+
 /* ================= AI CALL ================= */
 async function callAI(prompt: string): Promise<string | null> {
   if (process.env.OPENROUTER_API_KEY) {
@@ -24,7 +35,8 @@ async function callAI(prompt: string): Promise<string | null> {
           },
         }
       )
-      return res.data.choices?.[0]?.message?.content?.trim() || null
+
+      return res.data?.choices?.[0]?.message?.content?.trim() || null
     } catch {
       // fallback silently
     }
@@ -39,7 +51,8 @@ async function callAI(prompt: string): Promise<string | null> {
           generationConfig: { maxOutputTokens: 800 },
         }
       )
-      return res.data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null
+
+      return res.data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null
     } catch {
       // fallback silently
     }
@@ -52,6 +65,7 @@ async function callAI(prompt: string): Promise<string | null> {
 export async function POST(req: Request) {
   const supabase = createClient()
 
+  // 🔐 AUTH
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -63,7 +77,9 @@ export async function POST(req: Request) {
     )
   }
 
+  // 📥 INPUT
   const body = await req.json()
+
   const {
     brand,
     offer,
@@ -80,7 +96,7 @@ export async function POST(req: Request) {
     )
   }
 
-  // ✅ FIX: TYPE RPC PARAMS
+  // 💳 CREDIT CHECK (FIXED)
   const { data: ok, error: rpcError } = await supabase.rpc(
     'deduct_credits',
     {
@@ -96,6 +112,7 @@ export async function POST(req: Request) {
     )
   }
 
+  // 🧠 PROMPT
   const prompt = `Tu es expert en publicité africaine, spécialisé Cameroun. Réponds UNIQUEMENT en JSON valide sans markdown.
 Crée un contenu flyer pour: Marque: ${brand}, Type: ${type}, Offre: ${offer}, Contact: ${contact}, Langue: ${language}, Détails: ${details}
 JSON: {"headline":"titre court accrocheur","subtitle":"sous-titre 15 mots max","body":"texte principal 2-3 phrases","cta":"appel action 6 mots","imagePrompt":"description image IA en anglais style africain professionnel"}`
@@ -104,6 +121,7 @@ JSON: {"headline":"titre court accrocheur","subtitle":"sous-titre 15 mots max","
 
   const aiText = await callAI(prompt)
 
+  // 🧾 PARSE RESULT
   try {
     result = JSON.parse(
       aiText?.replace(/```json|```/g, '').trim() || ''
@@ -119,7 +137,8 @@ JSON: {"headline":"titre court accrocheur","subtitle":"sous-titre 15 mots max","
     }
   }
 
-  await supabase.from('ai_jobs').insert({
+  // 💾 SAVE JOB (FIXED)
+  const job: AIJobInsert = {
     user_id: user.id,
     job_type: 'flyer',
     prompt: JSON.stringify({ brand, offer }),
@@ -127,7 +146,10 @@ JSON: {"headline":"titre court accrocheur","subtitle":"sous-titre 15 mots max","
     status: 'completed',
     credits_used: COST,
     provider: 'openrouter',
-  })
+  }
 
+  await supabase.from('ai_jobs').insert(job as any)
+
+  // ✅ RESPONSE
   return NextResponse.json(result)
 }
